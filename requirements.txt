@@ -3,3 +3,4 @@ Flask-MySQL==1.5.2
 peewee==3.16.3
 mysql-connector-python==8.0.33
 python-dotenv==1.0.0
+cryptography>=41.0.0

@@ -8,6 +8,9 @@ class Config:
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', True)
     
+    # Security
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
+    
     # Database Configuration
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_USER = os.getenv('DB_USER', 'root')

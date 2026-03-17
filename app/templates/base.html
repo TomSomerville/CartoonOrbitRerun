@@ -5,47 +5,610 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CartoonOrbitRerun{% endblock %}</title>
     <style>
+        :root {
+            --site-width: 810px;
+            --site-height: 680px;
+            --footer-height: 60px;
+            --sidebar-width: 220px;
+            --main-width: calc(var(--site-width) - var(--sidebar-width));
+
+            /* page */
+            --page-bg: #003466;
+            --page-bg-fade: 40px;
+
+            /* site-container */
+            --site-padding-top: 5px;
+            --site-padding-bottom: 5px;
+            --site-padding-left: 5px;
+            --site-padding-right: 5px;
+
+            /* top-bar */
+            --top-bar-padding-top: 0px;
+            --top-bar-padding-bottom: 0px;
+
+            /* ad-bar */
+            --ad-bar-height: 70px;
+            --ad-bar-border: 2px;
+            --ad-bar-logo-width: 200px;
+            --ad-bar-logo-scale: 1.25;
+            --ad-bar-logo-padding-top: 0px;
+            --ad-bar-logo-padding-bottom: 0px;
+            --ad-bar-logo-padding-left: 10px;
+            --ad-bar-logo-padding-right: 18px;
+            --ad-bar-adlabel-margin-left: 10px;
+            --ad-bar-adlabel-width: 20px;
+            --ad-bar-adlabel-scale: 1;
+            --ad-bar-adlabel-padding-left: 0px;
+            --ad-bar-adlabel-padding-right: 0px;
+            --ad-bar-ad-padding-left: 2px;
+            --ad-bar-ad-padding-right: 2px;
+            --ad-bar-ad-width: 450px;
+            --ad-bar-rewatch-width: 90px;
+            --ad-bar-rewatch-scale: 1;
+            --ad-bar-rewatch-padding-top: 0px;
+            --ad-bar-rewatch-padding-bottom: 0px;
+            --ad-bar-rewatch-padding-left: 0px;
+            --ad-bar-rewatch-padding-right: 10px;
+
+            /* hr-nav */
+            --hr-nav-margin-top-pad: 10px;
+            --hr-nav-margin-bottom-pad: 5px;
+            --hr-nav-gap: 6px;
+            --hr-nav-height: 30px;
+
+            /* hr-nav-left */
+            --hr-nav-left-width: 240px;
+            --hr-nav-left-bg: #3399CC;
+            --hr-nav-left-border-radius: 8px;
+            --hr-nav-left-padding-top: 0px;
+            --hr-nav-left-padding-bottom: 0px;
+            --hr-nav-left-padding-left: 3px;
+            --hr-nav-left-padding-right: 3px;
+            --hr-nav-left-gap: 14px;
+
+            /* hr-nav-right */
+            --hr-nav-right-bg: #336699;
+            --hr-nav-right-border-radius: 8px;
+            --hr-nav-right-padding-top: 0px;
+            --hr-nav-right-padding-bottom: 0px;
+            --hr-nav-right-padding-left: 3px;
+            --hr-nav-right-padding-right: 3px;
+            --hr-nav-right-gap: 14px;
+            --content-height: calc(var(--site-height) - var(--ad-bar-height) - var(--hr-nav-height) - var(--footer-height));
+
+            /* layout */
+            --layout-bg: #336699;
+            --layout-padding-top: 0px;
+            --layout-padding-bottom: 5px;
+
+            /* sidebar */
+            --sidebar-width: 240px;
+            --sidebar-height: 100%;
+            --sidebar-bg: #3399CC;
+            --sidebar-border-color: #3399CC;
+            --sidebar-border-width: 0px;
+            --sidebar-border-radius: 6px;
+            --sidebar-padding-top: 6px;
+            --sidebar-padding-bottom: 6px;
+            --sidebar-padding-left: 6px;
+            --sidebar-padding-right: 6px;
+            --sidebar-gap: 6px;
+
+
+            /* sidebar-top */
+            --sidebar-top-width: 100%;
+            --sidebar-top-height: 100px;
+            --sidebar-top-border-radius: 6px;
+            --sidebar-top-bg: #2a5580;
+            --sidebar-top-padding-top: 8px;
+            --sidebar-top-padding-bottom: 8px;
+            --sidebar-top-padding-left: 8px;
+            --sidebar-top-padding-right: 8px;
+
+            /* sidebar-middle */
+            --sidebar-middle-width: 100%;
+            --sidebar-middle-height: 280px;
+            --sidebar-middle-border-radius: 6px;
+            --sidebar-middle-bg: #2a5580;
+            --sidebar-middle-padding-top: 8px;
+            --sidebar-middle-padding-bottom: 8px;
+            --sidebar-middle-padding-left: 8px;
+            --sidebar-middle-padding-right: 8px;
+
+            /* sidebar-bottom */
+            --sidebar-bottom-width: 100%;
+            --sidebar-bottom-height: 100;
+            --sidebar-bottom-border-radius: 6px;
+            --sidebar-bottom-bg: transparent;
+            --sidebar-bottom-padding-top: 0px;
+            --sidebar-bottom-padding-bottom: 0px;
+            --sidebar-bottom-padding-left: 0px;
+            --sidebar-bottom-padding-right: 0px;
+
+            /* main-content */
+            --main-content-height: 100%;
+            --main-content-bg: #3399CC;
+            --main-content-border-color: #3399CC;
+            --main-content-border-width: 0px;
+            --main-content-border-radius: 8px;
+            --main-content-padding-top: 0px;
+            --main-content-padding-bottom: 0px;
+            --main-content-padding-left: 0px;
+            --main-content-padding-right: 0px;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
+            background-color: var(--page-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .site-container {
+            width: var(--site-width);
+            height: var(--site-height);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+            overflow: hidden;
+            padding-top: var(--site-padding-top);
+            padding-bottom: var(--site-padding-bottom);
+            padding-left: var(--site-padding-left);
+            padding-right: var(--site-padding-right);
+            transform-origin: top center;
         }
-        nav {
-            margin-bottom: 30px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-        }
-        nav a {
+
+        a {
             text-decoration: none;
-            color: #333;
-            margin-right: 20px;
-            font-weight: bold;
+            color: inherit;
         }
-        nav a:hover {
+
+        .top-bar {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+            padding-top: var(--top-bar-padding-top);
+            padding-bottom: var(--top-bar-padding-bottom);
+        }
+
+        .ad-bar {
+            display: flex;
+            height: var(--ad-bar-height);
+            flex-shrink: 0;
+            background: #336699;
+            border: var(--ad-bar-border) solid #336699;
+            border-radius: 8px;
+        }
+
+        .ad-bar-logo {
+            width: var(--ad-bar-logo-width);
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            background: #000000;
+            border-radius: 8px 0 0 8px;
+            justify-content: center;
+            padding-top: var(--ad-bar-logo-padding-top);
+            padding-bottom: var(--ad-bar-logo-padding-bottom);
+            padding-left: var(--ad-bar-logo-padding-left);
+            padding-right: var(--ad-bar-logo-padding-right);
+            overflow: hidden;
+        }
+
+        .ad-bar-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: scale(var(--ad-bar-logo-scale));
+            transform-origin: center center;
+        }
+
+        .ad-bar-adlabel {
+            width: var(--ad-bar-adlabel-width);
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-left: var(--ad-bar-adlabel-margin-left);
+            padding-left: var(--ad-bar-adlabel-padding-left);
+            padding-right: var(--ad-bar-adlabel-padding-right);
+            overflow: hidden;
+        }
+
+        .ad-bar-adlabel img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: scale(var(--ad-bar-adlabel-scale));
+            transform-origin: center center;
+        }
+
+        .ad-bar-ad {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: var(--ad-bar-ad-padding-left);
+            padding-right: var(--ad-bar-ad-padding-right);
+            overflow: hidden;
+        }
+
+        .ad-bar-ad img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: left center;
+        }
+
+        .ad-bar-rewatch {
+            width: var(--ad-bar-rewatch-width);
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            background: transparent;
+            padding-top: var(--ad-bar-rewatch-padding-top);
+            padding-bottom: var(--ad-bar-rewatch-padding-bottom);
+            padding-left: var(--ad-bar-rewatch-padding-left);
+            padding-right: var(--ad-bar-rewatch-padding-right);
+            overflow: hidden;
+        }
+
+        .ad-bar-rewatch img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: right center;
+            transform: scale(var(--ad-bar-rewatch-scale));
+            transform-origin: center center;
+        }
+
+        .hr-nav {
+            display: flex;
+            height: var(--hr-nav-height);
+            flex-shrink: 0;
+            margin-top: var(--hr-nav-margin-top-pad);
+            margin-bottom: var(--hr-nav-margin-bottom-pad);
+            gap: var(--hr-nav-gap);
+        }
+
+        .hr-nav-left {
+            width: var(--hr-nav-left-width);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-top: var(--hr-nav-left-padding-top);
+            padding-bottom: var(--hr-nav-left-padding-bottom);
+            padding-left: var(--hr-nav-left-padding-left);
+            padding-right: var(--hr-nav-left-padding-right);
+            gap: var(--hr-nav-left-gap);
+            background: var(--hr-nav-left-bg);
+            border-radius: var(--hr-nav-left-border-radius);
+        }
+
+        .hr-nav-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-top: var(--hr-nav-right-padding-top);
+            padding-bottom: var(--hr-nav-right-padding-bottom);
+            padding-left: var(--hr-nav-right-padding-left);
+            padding-right: var(--hr-nav-right-padding-right);
+            gap: var(--hr-nav-right-gap);
+            background: var(--hr-nav-right-bg);
+            border-radius: var(--hr-nav-right-border-radius);
+        }
+
+        .hr-nav .btn {
+            align-self: center;
+        }
+
+        .top-bar a {
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        .top-bar a:hover {
             color: #007bff;
+        }
+
+        .layout {
+            display: flex;
+            width: 100%;
+            height: var(--content-height);
+            min-height: 0;
+            overflow: hidden;
+            gap: var(--hr-nav-gap);
+            padding-top: var(--layout-padding-top);
+            padding-bottom: var(--layout-padding-bottom);
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            height: var(--sidebar-height);
+            flex-shrink: 0;
+            background: var(--sidebar-bg);
+            border: var(--sidebar-border-width) solid var(--sidebar-border-color);
+            border-radius: var(--sidebar-border-radius);
+            padding-top: var(--sidebar-padding-top);
+            padding-bottom: var(--sidebar-padding-bottom);
+            padding-left: var(--sidebar-padding-left);
+            padding-right: var(--sidebar-padding-right);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-top,
+        .sidebar-middle,
+        .sidebar-bottom {
+            flex-shrink: 0;
+        }
+
+        .sidebar-middle {
+            margin-top: auto;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+        }
+
+        .sidebar-top {
+            width: var(--sidebar-top-width);
+            height: var(--sidebar-top-height);
+            border-radius: var(--sidebar-top-border-radius);
+            background: var(--sidebar-top-bg);
+            padding-top: var(--sidebar-top-padding-top);
+            padding-bottom: var(--sidebar-top-padding-bottom);
+            padding-left: var(--sidebar-top-padding-left);
+            padding-right: var(--sidebar-top-padding-right);
+        }
+
+        .sidebar-middle {
+            width: var(--sidebar-middle-width);
+            height: var(--sidebar-middle-height);
+            border-radius: var(--sidebar-middle-border-radius);
+            background: var(--sidebar-middle-bg);
+            padding-top: var(--sidebar-middle-padding-top);
+            padding-bottom: var(--sidebar-middle-padding-bottom);
+            padding-left: var(--sidebar-middle-padding-left);
+            padding-right: var(--sidebar-middle-padding-right);
+        }
+
+        .sidebar-bottom {
+            width: var(--sidebar-bottom-width);
+            height: var(--sidebar-bottom-height);
+            border-radius: var(--sidebar-bottom-border-radius);
+            background: var(--sidebar-bottom-bg);
+            padding-top: var(--sidebar-bottom-padding-top);
+            padding-bottom: var(--sidebar-bottom-padding-bottom);
+            padding-left: var(--sidebar-bottom-padding-left);
+            padding-right: var(--sidebar-bottom-padding-right);
+            overflow: hidden;
+        }
+
+        .sidebar-bottom img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            height: var(--main-content-height);
+            background: var(--main-content-bg);
+            border: var(--main-content-border-width) solid var(--main-content-border-color);
+            border-radius: var(--main-content-border-radius);
+            padding-top: var(--main-content-padding-top);
+            padding-bottom: var(--main-content-padding-bottom);
+            padding-left: var(--main-content-padding-left);
+            padding-right: var(--main-content-padding-right);
+            overflow-y: auto;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 3px 5px;
+            border-radius: 6px;
+            border: 2px solid #1a5f8a;
+            background: linear-gradient(to bottom, #5bb8e8 0%, #2e8fc0 50%, #1a6fa0 100%);
+            font-weight: bold;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0);
+            box-shadow: 0 1px 0 #0f4060, 0 1px 1px rgba(0, 0, 0, 0.4);
+            user-select: none;
+        }
+
+        .btn:hover {
+            background: linear-gradient(to bottom, #72caf5 0%, #3aa0d0 50%, #2280b0 100%);
+        }
+
+        .btn:active {
+            box-shadow: 0 1px 0 #0f4060, 0 2px 3px rgba(0, 0, 0, 0.4);
+            transform: translateY(3px);
+        }
+
+        .footer {
+            height: var(--footer-height);
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #ffffff;
+            flex-shrink: 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <nav>
-            <a href="/">Index</a>
-            <a href="/czonehome">Czonehome</a>
-        </nav>
-        {% block content %}{% endblock %}
+    <div class="site-container">
+        <header class="top-bar">
+            <div class="ad-bar">
+                <div class="ad-bar-logo"><img src="/static/logo.gif" alt="Logo"></div>
+                <div class="ad-bar-adlabel"><img src="/static/ad.gif" alt=""></div>
+                <div class="ad-bar-ad">
+                    {% if ad_gifs %}
+                        <img id="ad-gif" src="" alt="">
+                    {% endif %}
+                </div>
+                <div class="ad-bar-rewatch"><img src="/static/rewatch.gif" alt=""></div>
+            </div>
+            <div class="hr-nav">
+                <div class="hr-nav-left">
+                    <a class="btn" href="/" style="color: #ffffff;">Home</a>
+                    <a class="btn" href="/czonehome" style="color: #ffffff;">Czonehome</a>
+                </div>
+                <div class="hr-nav-right">
+                    {% if session.get('user_id') %}
+                        <a class="btn" href="/logout" style="color: #ffffff;">Logout</a>
+                    {% else %}
+                        <a class="btn" href="/login" style="color: #ffffff;">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <div class="layout">
+            <aside class="sidebar">
+                <div class="sidebar-top"></div>
+                <div class="sidebar-middle"></div>
+                <div class="sidebar-bottom">
+                    {% if eventbottom_gifs %}
+                        <img id="eventbottom-gif" src="" alt="">
+                    {% endif %}
+                </div>
+            </aside>
+
+            <main class="main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        <div class="footer">
+            Site in active development
+        </div>
     </div>
+    {% if eventbottom_gifs %}
+    <script>
+        (function () {
+            const gifs = {{ eventbottom_gifs | tojson }};
+            const img = document.getElementById('eventbottom-gif');
+            let current = Math.floor(Math.random() * gifs.length);
+            img.src = gifs[current];
+            setInterval(function () {
+                let next;
+                do { next = Math.floor(Math.random() * gifs.length); }
+                while (gifs.length > 1 && next === current);
+                current = next;
+                img.src = gifs[current];
+            }, 5000);
+        })();
+    </script>
+    {% endif %}
+    {% if ad_gifs %}
+    <script>
+        (function () {
+            const gifs = {{ ad_gifs | tojson }};
+            const img = document.getElementById('ad-gif');
+            let current = Math.floor(Math.random() * gifs.length);
+            img.src = gifs[current];
+            setInterval(function () {
+                let next;
+                do { next = Math.floor(Math.random() * gifs.length); }
+                while (gifs.length > 1 && next === current);
+                current = next;
+                img.src = gifs[current];
+            }, 5000);
+        })();
+    </script>
+    {% endif %}
+    <script>
+        (function () {
+            const W = 800, H = 670;
+            const el = document.querySelector('.site-container');
+            const rootStyle = getComputedStyle(document.documentElement);
+            const adBarH = parseFloat(rootStyle.getPropertyValue('--ad-bar-height'));
+            const fadeH  = parseFloat(rootStyle.getPropertyValue('--page-bg-fade'));
+            const pageBg = rootStyle.getPropertyValue('--page-bg').trim();
+
+            function applyScale() {
+                const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
+                const s = scale < 1 ? scale : 1;
+                el.style.transform = s < 1 ? `scale(${s})` : '';
+                const stop1 = adBarH * s;
+                const stop2 = stop1 + fadeH * s;
+                document.body.style.backgroundImage =
+                    `linear-gradient(to bottom, #000000 ${stop1}px, ${pageBg} ${stop2}px)`;
+                document.body.style.backgroundRepeat = 'no-repeat';
+                document.body.style.backgroundSize = '100% 100vh';
+            }
+            window.addEventListener('resize', applyScale);
+            applyScale();
+        })();
+    </script>
+    <script>
+        (function () {
+            const mainContent = document.querySelector('.main-content');
+
+            function navigate(url) {
+                fetch(url)
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        const doc = new DOMParser().parseFromString(html, 'text/html');
+                        const incoming = doc.querySelector('.main-content');
+                        if (incoming) {
+                            mainContent.innerHTML = incoming.innerHTML;
+                            document.title = doc.title;
+                            history.pushState(null, doc.title, url);
+                        }
+                    });
+            }
+
+            document.querySelector('.site-container').addEventListener('click', function (e) {
+                const link = e.target.closest('a[href]');
+                if (!link) return;
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('http') || href.startsWith('//') ||
+                    href.startsWith('#') || href.startsWith('mailto:')) return;
+                e.preventDefault();
+                navigate(href);
+            });
+
+            window.addEventListener('popstate', function () {
+                navigate(location.pathname + location.search);
+            });
+        })();
+    </script>
 </body>
 </html>
