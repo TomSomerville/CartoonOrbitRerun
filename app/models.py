@@ -3,16 +3,19 @@ import peewee as pw
 from datetime import datetime
 
 class User(BaseModel):
-    """User model for Cartoon Orbit users"""
-    username = pw.CharField(unique=True, max_length=50)
-    email = pw.CharField(unique=True)
-    password_hash = pw.CharField()
-    points = pw.IntegerField(default=100)  # Starting points for new users
+    """User model for Cartoon Orbit users — authenticated via Discord"""
+    discord_id = pw.CharField(unique=True, max_length=30)
+    discord_username = pw.CharField(max_length=100)
+    username = pw.CharField(unique=True, max_length=50, null=True)
+    avatar = pw.CharField(max_length=100, null=True)
+    points = pw.IntegerField(default=100)
     created_at = pw.DateTimeField(default=datetime.now)
     updated_at = pw.DateTimeField(default=datetime.now)
     last_login = pw.DateTimeField(null=True)
     is_active = pw.BooleanField(default=True)
-    
+    is_admin = pw.BooleanField(default=False)
+    last_ip = pw.CharField(max_length=45, null=True)
+
     class Meta:
         table_name = 'users'
 
@@ -21,29 +24,33 @@ class CToon(BaseModel):
     name = pw.CharField(max_length=100)
     description = pw.TextField(null=True)
     image_url = pw.CharField(max_length=255)
-    rarity = pw.CharField(max_length=20, default='common')  # common, rare, golden, holiday
-    toon_type = pw.CharField(max_length=20, default='sticker')  # sticker, game, code, ad, holiday
-    show_name = pw.CharField(max_length=100, null=True)  # Cartoon Network show
-    character_name = pw.CharField(max_length=100, null=True)
-    points_cost = pw.IntegerField(default=10)
-    is_animated = pw.BooleanField(default=False)
-    has_sound = pw.BooleanField(default=False)
+    rarity = pw.CharField(max_length=20, default='common')
     created_at = pw.DateTimeField(default=datetime.now)
-    
+    mint_count = pw.IntegerField(default=0)
+    ctoon_set = pw.CharField(max_length=100, null=True)
+    series = pw.CharField(max_length=100, null=True)
+    release_date = pw.DateTimeField(null=True)
+    cmart_value = pw.IntegerField(default=0)
+    edition = pw.IntegerField(default=1)
+    deletable = pw.BooleanField(default=False)
+    minted = pw.IntegerField(default=0)
+    in_cmart = pw.BooleanField(default=False)
+
     class Meta:
         table_name = 'ctoons'
 
 class UserCToon(BaseModel):
-    """User's collection of cToons"""
+    """User's collection of cToons — each row is one unique minted copy"""
     user = pw.ForeignKeyField(User, backref='ctoons')
     ctoon = pw.ForeignKeyField(CToon, backref='owners')
-    quantity = pw.IntegerField(default=1)
+    mint_number = pw.IntegerField()
     acquired_at = pw.DateTimeField(default=datetime.now)
-    
+    acquired_via = pw.CharField(max_length=20, default='cmart')  # cmart, code, prize
+
     class Meta:
         table_name = 'user_ctoons'
         indexes = (
-            (('user', 'ctoon'), True),  # Unique constraint
+            (('ctoon', 'mint_number'), True),  # Each minted copy is unique globally
         )
 
 class CZone(BaseModel):
@@ -65,34 +72,9 @@ class CZoneItem(BaseModel):
     ctoon = pw.ForeignKeyField(CToon, backref='czone_placements')
     position_x = pw.IntegerField(default=0)
     position_y = pw.IntegerField(default=0)
-    rotation = pw.IntegerField(default=0)
+    z_index = pw.IntegerField(default=1)
     placed_at = pw.DateTimeField(default=datetime.now)
-    
+
     class Meta:
         table_name = 'czone_items'
 
-class Buddy(BaseModel):
-    """Buddy list relationships"""
-    user = pw.ForeignKeyField(User, backref='buddies')
-    buddy_user = pw.ForeignKeyField(User, backref='buddy_of')
-    added_at = pw.DateTimeField(default=datetime.now)
-    
-    class Meta:
-        table_name = 'buddies'
-        indexes = (
-            (('user', 'buddy_user'), True),  # Unique constraint
-        )
-
-class Auction(BaseModel):
-    """Auction system for trading cToons"""
-    seller = pw.ForeignKeyField(User, backref='auctions')
-    ctoon = pw.ForeignKeyField(CToon, backref='auctions')
-    starting_bid = pw.IntegerField()
-    current_bid = pw.IntegerField(null=True)
-    current_bidder = pw.ForeignKeyField(User, null=True, backref='bids')
-    end_time = pw.DateTimeField()
-    created_at = pw.DateTimeField(default=datetime.now)
-    status = pw.CharField(max_length=20, default='active')  # active, ended, cancelled
-    
-    class Meta:
-        table_name = 'auctions'

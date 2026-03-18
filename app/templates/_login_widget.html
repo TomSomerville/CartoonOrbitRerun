@@ -1,0 +1,96 @@
+<style>
+    .login-widget {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 10px;
+        color: #ffffff;
+        font-family: Arial, sans-serif;
+    }
+
+    .login-widget h3 {
+        font-size: 0.85rem;
+        font-weight: bold;
+        color: #c8e8ff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        text-align: center;
+        margin-bottom: 4px;
+    }
+
+    .login-widget p {
+        font-size: 0.72rem;
+        color: #a8ccdd;
+        text-align: center;
+        line-height: 1.4;
+    }
+
+    .lw-flash {
+        font-size: 0.72rem;
+        color: #ffdddd;
+        text-align: center;
+    }
+
+    .discord-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #5865F2;
+        color: #ffffff;
+        font-size: 0.8rem;
+        font-weight: bold;
+        padding: 7px 14px;
+        border-radius: 6px;
+        border: 2px solid #4752c4;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .discord-btn:hover {
+        background: #4752c4;
+    }
+
+    .discord-btn svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="login-widget">
+    <h3>Member Login</h3>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="lw-flash">
+                {% for category, msg in messages %}
+                    <p>{{ msg }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <p>Sign in with your<br>Discord account</p>
+
+    <a href="/auth/discord" class="discord-btn" data-full-nav>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36" fill="#ffffff">
+            <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83
+                     19.58 19.58 0 0 0-5.85-.89C66.06 5.94 60 5.94 54 5.94
+                     a19.58 19.58 0 0 0-5.85.89A72.06 72.06 0 0 0 44.77 0
+                     a105.15 105.15 0 0 0-26.23 8.07C2.79 32.65-1.71 56.6.54 80.21
+                     a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11
+                     68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2
+                     a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2
+                     a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1
+                     a105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15z
+                     M42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74
+                     S54 46 53.89 53s-5.05 12.69-11.44 12.69zm42.24 0
+                     C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74
+                     S96.23 46 96.12 53s-5.04 12.69-11.43 12.69z"/>
+        </svg>
+        Login with Discord
+    </a>
+</div>

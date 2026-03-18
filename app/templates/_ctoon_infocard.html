@@ -1,0 +1,415 @@
+<style>
+    :root {
+        /* ── New badge ── */
+        --ic-badge-new-size:           100px;
+        --ic-badge-new-x:              -65px;
+        --ic-badge-new-y:              40px;
+        --ic-badge-new-rotation:       45deg;
+        --ic-badge-new-scale:          1.5;
+
+        /* ── Sold Out badge ── */
+        --ic-badge-soldout-size:       100px;
+        --ic-badge-soldout-x:          -50px;
+        --ic-badge-soldout-y:          55px;
+        --ic-badge-soldout-rotation:   45deg;
+        --ic-badge-soldout-scale:      1.5;
+
+        /* ── Modal size ── */
+        --ic-width:           208px;
+        --ic-height:          500px;
+        --ic-img-area-height: 220px;
+        --ic-img-scale:       .65;
+        --ic-bg-size:         contain;
+        --ic-bg-position:     top center;
+        --ic-body-padding:    12px;
+        --ic-font-size-name:  0.95rem;
+        --ic-font-size-detail: 0.75rem;
+    }
+</style>
+
+<!-- ── cToon Infocard Modal (global) ── -->
+<div id="ctoon-infocard-backdrop" class="ctoon-infocard-backdrop" hidden>
+    <div class="ctoon-infocard">
+
+        <button class="ctoon-infocard-close" id="ctoon-infocard-close">&times;</button>
+
+        <!-- Image area with splash background -->
+        <div class="ctoon-infocard-img-area">
+            <img id="ctoon-infocard-img" src="" alt="" class="ctoon-infocard-img">
+            <div id="ctoon-infocard-set-banner" class="ctoon-infocard-set-banner"></div>
+            <img id="ctoon-infocard-badge" src="" alt="" class="ctoon-infocard-badge" hidden>
+        </div>
+
+        <!-- Info body -->
+        <div class="ctoon-infocard-body">
+            <h2 id="ctoon-infocard-name" class="ctoon-infocard-name"></h2>
+
+            <div class="ctoon-infocard-buy-row">
+                <button class="ctoon-infocard-buy-btn" id="ctoon-infocard-buy-btn">BUY</button>
+                <span id="ctoon-infocard-price" class="ctoon-infocard-price"></span>
+            </div>
+
+            <p id="ctoon-infocard-own-status" class="ctoon-infocard-own-status"></p>
+
+            <hr class="ctoon-infocard-divider">
+
+            <div class="ctoon-infocard-details">
+                <div class="ctoon-infocard-detail-row">
+                    <span class="ctoon-infocard-detail-label">EDITION:</span>
+                    <span id="ctoon-infocard-edition" class="ctoon-infocard-detail-value"></span>
+                </div>
+                <div class="ctoon-infocard-detail-row">
+                    <span class="ctoon-infocard-detail-label">RELEASE DATE:</span>
+                    <span id="ctoon-infocard-release-date" class="ctoon-infocard-detail-value"></span>
+                </div>
+                <div class="ctoon-infocard-detail-row">
+                    <span class="ctoon-infocard-detail-label">TOTAL RELEASED:</span>
+                    <span id="ctoon-infocard-total-released" class="ctoon-infocard-detail-value"></span>
+                </div>
+                <div class="ctoon-infocard-detail-row">
+                    <span class="ctoon-infocard-detail-label" id="ctoon-infocard-last-label">TOTAL LEFT:</span>
+                    <span id="ctoon-infocard-total-left" class="ctoon-infocard-detail-value"></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .ctoon-infocard-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .ctoon-infocard-backdrop[hidden] { display: none; }
+
+    .ctoon-infocard {
+        background: #ffffff;
+        border: 3px solid var(--OrbitLightBlue);
+        border-radius: 12px;
+        width: var(--ic-width);
+        height: var(--ic-height);
+        max-width: 90vw;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ── Close button ── */
+    .ctoon-infocard-close {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        background: none;
+        border: none;
+        color: #ffffff;
+        font-size: 1.4rem;
+        cursor: pointer;
+        line-height: 1;
+        z-index: 10;
+    }
+
+    .ctoon-infocard-close:hover { opacity: 0.75; }
+
+    /* ── Image area ── */
+    .ctoon-infocard-img-area {
+        position: relative;
+        height: var(--ic-img-area-height);
+        background-color: var(--OrbitDarkBlue);
+        background-image: url('/static/infocard_splash_screen.png');
+        background-repeat: no-repeat;
+        background-size: var(--ic-bg-size);
+        background-position: var(--ic-bg-position);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .ctoon-infocard-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        position: relative;
+        z-index: 1;
+        transform: scale(var(--ic-img-scale));
+    }
+
+    /* ── Set banner ── */
+    .ctoon-infocard-set-banner {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--OrbitDarkBlue);
+        color: #ffffff;
+        font-size: 0.68rem;
+        font-weight: bold;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-align: center;
+        padding: 4px 8px;
+        z-index: 2;
+    }
+
+    /* ── Badge (positioned inside img-area) ── */
+    .ctoon-infocard-badge {
+        position: absolute;
+        object-fit: contain;
+        pointer-events: none;
+        transform-origin: top right;
+        z-index: 3;
+    }
+
+    .ctoon-infocard-badge--new {
+        width:     var(--ic-badge-new-size);
+        height:    var(--ic-badge-new-size);
+        top:       var(--ic-badge-new-y);
+        right:     var(--ic-badge-new-x);
+        transform: rotate(var(--ic-badge-new-rotation)) scale(var(--ic-badge-new-scale));
+    }
+
+    .ctoon-infocard-badge--soldout {
+        width:     var(--ic-badge-soldout-size);
+        height:    var(--ic-badge-soldout-size);
+        top:       var(--ic-badge-soldout-y);
+        right:     var(--ic-badge-soldout-x);
+        transform: rotate(var(--ic-badge-soldout-rotation)) scale(var(--ic-badge-soldout-scale));
+    }
+
+    /* ── Info body ── */
+    .ctoon-infocard-body {
+        padding: 10px var(--ic-body-padding) var(--ic-body-padding);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .ctoon-infocard-name {
+        font-size: var(--ic-font-size-name);
+        font-weight: bold;
+        color: #1a1a1a;
+        margin: 0;
+    }
+
+    /* ── Buy row ── */
+    .ctoon-infocard-buy-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ctoon-infocard-buy-btn {
+        background: #2d8a50;
+        color: #ffffff;
+        border: none;
+        border-radius: 20px;
+        padding: 4px 16px;
+        font-size: 0.82rem;
+        font-weight: bold;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .ctoon-infocard-buy-btn:hover { filter: brightness(1.1); }
+    .ctoon-infocard-buy-btn:disabled { opacity: 0.5; cursor: default; filter: none; }
+
+    .ctoon-infocard-price {
+        background: #7dc814;
+        color: #1a1a1a;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.82rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    /* ── Ownership status ── */
+    .ctoon-infocard-own-status {
+        font-size: 0.72rem;
+        color: #888888;
+        font-style: italic;
+        margin: 0;
+    }
+
+    /* ── Divider ── */
+    .ctoon-infocard-divider {
+        border: none;
+        border-top: 1px solid #e0e0e0;
+        margin: 0;
+    }
+
+    /* ── Detail rows ── */
+    .ctoon-infocard-details {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .ctoon-infocard-detail-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: var(--ic-font-size-detail);
+    }
+
+    .ctoon-infocard-detail-label {
+        font-weight: bold;
+        color: var(--OrbitDarkBlue);
+    }
+
+    .ctoon-infocard-detail-value {
+        color: #333333;
+    }
+
+    .ctoon-infocard-trigger {
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    (function () {
+        var currentCtoonId = null;
+
+        function openInfocard(data) {
+            currentCtoonId = data.ctoonId || null;
+
+            document.getElementById('ctoon-infocard-img').src = data.image;
+            document.getElementById('ctoon-infocard-img').alt = data.name;
+            document.getElementById('ctoon-infocard-name').textContent = data.name;
+            document.getElementById('ctoon-infocard-set-banner').textContent = data.set || '';
+
+            // Buy row
+            var mintCount  = parseInt(data.mintCount || '0');
+            var minted     = parseInt(data.minted    || '0');
+            var cmartValue = parseInt(data.cmartValue || '0');
+            var isSoldOut  = mintCount > 0 && minted >= mintCount;
+
+            var buyBtn   = document.getElementById('ctoon-infocard-buy-btn');
+            var priceEl  = document.getElementById('ctoon-infocard-price');
+            buyBtn.disabled = isSoldOut || !currentCtoonId;
+            priceEl.textContent = cmartValue > 0 ? cmartValue + ' POINTS' : '';
+
+            // Ownership status
+            var statusEl = document.getElementById('ctoon-infocard-own-status');
+            if (data.context === 'collection') {
+                statusEl.textContent = 'In your collection.';
+            } else if (isSoldOut) {
+                statusEl.textContent = 'This cToon is sold out.';
+            } else {
+                statusEl.textContent = "You don't own this card.";
+            }
+
+            // Details
+            var releaseDate    = data.releaseDate ? new Date(data.releaseDate) : null;
+            var releaseDateStr = releaseDate ? releaseDate.toISOString().slice(0, 10) : '—';
+            var totalReleased  = mintCount > 0 ? mintCount.toLocaleString() : 'Unlimited';
+            var totalLeft      = mintCount > 0 ? (mintCount - minted).toLocaleString() : '—';
+
+            document.getElementById('ctoon-infocard-edition').textContent        = data.edition || '—';
+            document.getElementById('ctoon-infocard-release-date').textContent  = releaseDateStr;
+            document.getElementById('ctoon-infocard-total-released').textContent = totalReleased;
+
+            var mintNumber = data.mintNumber ? parseInt(data.mintNumber) : null;
+            var lastLabel  = document.getElementById('ctoon-infocard-last-label');
+            var lastValue  = document.getElementById('ctoon-infocard-total-left');
+            if (mintNumber) {
+                lastLabel.textContent = 'MINT NUMBER:';
+                lastValue.textContent = '#' + mintNumber;
+            } else {
+                lastLabel.textContent = 'TOTAL LEFT:';
+                lastValue.textContent = totalLeft;
+            }
+
+            // Badge
+            var badgeEl = document.getElementById('ctoon-infocard-badge');
+            var isNew = releaseDate && (Date.now() - releaseDate.getTime()) < 7 * 24 * 60 * 60 * 1000;
+            badgeEl.classList.remove('ctoon-infocard-badge--new', 'ctoon-infocard-badge--soldout');
+            if (isSoldOut) {
+                badgeEl.src = '/static/soldout.png';
+                badgeEl.alt = 'Sold Out';
+                badgeEl.classList.add('ctoon-infocard-badge--soldout');
+                badgeEl.hidden = false;
+            } else if (isNew) {
+                badgeEl.src = '/static/new.png';
+                badgeEl.alt = 'New';
+                badgeEl.classList.add('ctoon-infocard-badge--new');
+                badgeEl.hidden = false;
+            } else {
+                badgeEl.src = '';
+                badgeEl.hidden = true;
+            }
+
+            document.getElementById('ctoon-infocard-backdrop').hidden = false;
+        }
+
+        function closeInfocard() {
+            document.getElementById('ctoon-infocard-backdrop').hidden = true;
+        }
+
+        // BUY button in infocard
+        document.getElementById('ctoon-infocard-buy-btn').addEventListener('click', function () {
+            if (!currentCtoonId) return;
+            var btn = this;
+            btn.disabled = true;
+            fetch('/cmart/buy/' + currentCtoonId, { method: 'POST' })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+                .then(function (res) {
+                    var statusEl = document.getElementById('ctoon-infocard-own-status');
+                    if (res.ok) {
+                        statusEl.textContent = 'Added to your collection! (#' + res.data.mint_number + ')';
+                        var pts = document.getElementById('user-points');
+                        if (pts) pts.textContent = res.data.new_points + ' PTS.';
+                        if (res.data.sold_out) {
+                            document.getElementById('ctoon-infocard-total-left').textContent = '0';
+                        } else {
+                            var leftEl = document.getElementById('ctoon-infocard-total-left');
+                            if (leftEl.textContent !== '—') {
+                                leftEl.textContent = (parseInt(leftEl.textContent.replace(/,/g, '')) - 1).toLocaleString();
+                            }
+                            btn.disabled = false;
+                        }
+                    } else {
+                        statusEl.textContent = res.data.message || 'Purchase failed.';
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function () {
+                    document.getElementById('ctoon-infocard-own-status').textContent = 'Network error.';
+                    btn.disabled = false;
+                });
+        });
+
+        document.getElementById('ctoon-infocard-close').addEventListener('click', closeInfocard);
+        document.getElementById('ctoon-infocard-backdrop').addEventListener('click', function (e) {
+            if (e.target === this) closeInfocard();
+        });
+
+        document.addEventListener('click', function (e) {
+            var trigger = e.target.closest('.ctoon-infocard-trigger');
+            if (!trigger) return;
+            openInfocard({
+                ctoonId:     trigger.dataset.ctoonId,
+                name:        trigger.dataset.name,
+                image:       trigger.dataset.image,
+                rarity:      trigger.dataset.rarity,
+                series:      trigger.dataset.series,
+                set:         trigger.dataset.set,
+                edition:     trigger.dataset.edition,
+                minted:      trigger.dataset.minted,
+                mintCount:   trigger.dataset.mintCount,
+                cmartValue:  trigger.dataset.cmartValue,
+                mintNumber:  trigger.dataset.mintNumber,
+                releaseDate: trigger.dataset.releaseDate,
+                context:     trigger.dataset.context,
+            });
+        });
+    })();
+</script>

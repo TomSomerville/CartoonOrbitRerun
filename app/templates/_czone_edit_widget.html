@@ -1,0 +1,356 @@
+<style>
+    /* ── Wrapper ── */
+    .czew-wrapper {
+        display: none; /* shown by JS when build mode activates */
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    /* ── Tabs ── */
+    .czew-tabs {
+        display: flex;
+        gap: 2px;
+        flex-shrink: 0;
+        margin-bottom: 5px;
+    }
+
+    .czew-tab {
+        flex: 1;
+        padding: 3px 4px;
+        border-radius: 4px 4px 0 0;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-bottom: none;
+        background: rgba(0,0,0,0.2);
+        color: rgba(255,255,255,0.45);
+        font-size: 0.62rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .czew-tab.active {
+        background: rgba(0,0,0,0.35);
+        color: #ffffff;
+        border-color: rgba(255,255,255,0.22);
+    }
+
+    .czew-tab-panel {
+        display: none;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .czew-tab-panel.active { display: flex; }
+
+    /* ── Filters ── */
+    .czew-filters {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 5px;
+    }
+
+    /* Search — matches cf-search style */
+    .czew-search {
+        display: flex;
+        align-items: center;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 20px;
+        padding: 3px 8px;
+        gap: 4px;
+    }
+
+    .czew-search-icon { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+
+    .czew-search input {
+        background: none;
+        border: none;
+        outline: none;
+        color: #ffffff;
+        font-size: 0.72rem;
+        width: 100%;
+        padding: 0;
+    }
+
+    .czew-search input::placeholder { color: rgba(255,255,255,0.35); }
+
+    /* Rarity buttons — matches cf-rarity-btn style */
+    .czew-rarity-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+    }
+
+    .czew-rb {
+        border: none;
+        border-radius: 4px;
+        padding: 2px 5px;
+        font-size: 0.6rem;
+        font-weight: bold;
+        cursor: pointer;
+        opacity: 0.4;
+        transition: opacity 0.15s;
+        white-space: nowrap;
+    }
+
+    .czew-rb.active { opacity: 1; }
+    .czew-rb:hover  { opacity: 0.85; }
+
+    .czew-rb-common       { background: #6b7280; color: #fff; }
+    .czew-rb-uncommon     { background: #e5e7eb; color: #111; }
+    .czew-rb-rare         { background: #16a34a; color: #fff; }
+    .czew-rb-very-rare    { background: #2563eb; color: #fff; }
+    .czew-rb-crazy-rare   { background: #7c3aed; color: #fff; }
+    .czew-rb-prize-only   { background: #111;    color: #e5e7eb; }
+    .czew-rb-code-only    { background: #ea580c; color: #fff; }
+    .czew-rb-auction-only { background: #eab308; color: #111; }
+
+    /* Series dropdown — matches cf-select style */
+    .czew-select {
+        width: 100%;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 6px;
+        color: #ffffff;
+        font-size: 0.72rem;
+        padding: 3px 6px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .czew-select option { background: #1a3a58; }
+
+    /* ── cToon grid ── */
+    .czew-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,0.3) transparent;
+        flex: 1;
+        min-height: 0;
+        align-content: start;
+    }
+
+    .czew-toon {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: contain;
+        background: rgba(0,0,0,0.25);
+        border-radius: 4px;
+        padding: 3px;
+        cursor: grab;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    .czew-toon:hover {
+        background: rgba(0,0,0,0.4);
+    }
+
+    /* ── Background grid ── */
+    .czew-bg-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,0.3) transparent;
+        flex: 1;
+        min-height: 0;
+        align-content: start;
+    }
+
+    .czew-bg-item {
+        width: 100%;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+        background: rgba(0,0,0,0.25);
+        border-radius: 4px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        display: block;
+    }
+
+    .czew-bg-none {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        color: rgba(255,255,255,0.5);
+    }
+
+    .czew-bg-item:hover    { border-color: rgba(255,165,0,0.5); }
+    .czew-bg-item--active  { border-color: #f47b00; }
+
+    /* ── Placeholder tab content ── */
+    .czew-placeholder {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.35);
+        font-style: italic;
+    }
+</style>
+
+<div class="czew-wrapper" id="czew-wrapper">
+
+    <!-- Tabs -->
+    <div class="czew-tabs">
+        <button class="czew-tab active" data-czew-tab="ctoons">cToons</button>
+        <button class="czew-tab" data-czew-tab="bg">Background</button>
+    </div>
+
+    <!-- cToons tab -->
+    <div class="czew-tab-panel active" id="czew-panel-ctoons">
+        <div class="czew-filters">
+            <div class="czew-search">
+                <span class="czew-search-icon">&#9906;</span>
+                <input type="text" id="czew-search" placeholder="Search...">
+            </div>
+            <div class="czew-rarity-grid">
+                <button class="czew-rb czew-rb-common"       data-czew-rarity="common">C</button>
+                <button class="czew-rb czew-rb-uncommon"     data-czew-rarity="uncommon">U</button>
+                <button class="czew-rb czew-rb-rare"         data-czew-rarity="rare">R</button>
+                <button class="czew-rb czew-rb-very-rare"    data-czew-rarity="very rare">VR</button>
+                <button class="czew-rb czew-rb-crazy-rare"   data-czew-rarity="crazy rare">CR</button>
+                <button class="czew-rb czew-rb-prize-only"   data-czew-rarity="prize only">PO</button>
+                <button class="czew-rb czew-rb-code-only"    data-czew-rarity="code only">CO</button>
+                <button class="czew-rb czew-rb-auction-only" data-czew-rarity="auction only">AO</button>
+            </div>
+            <select class="czew-select" id="czew-series">
+                <option value="">All Series</option>
+            </select>
+        </div>
+
+        <div class="czew-grid" id="czew-grid">
+            {% for uc in owned_ctoons %}
+            <img class="czew-toon"
+                 src="{{ uc.ctoon.image_url }}"
+                 alt="{{ uc.ctoon.name }}"
+                 data-ctoon-id="{{ uc.ctoon.id }}"
+                 data-name="{{ uc.ctoon.name }}"
+                 data-image="{{ uc.ctoon.image_url }}"
+                 data-rarity="{{ uc.ctoon.rarity }}"
+                 data-series="{{ uc.ctoon.series or '' }}"
+                 data-set="{{ uc.ctoon.ctoon_set or '' }}"
+                 data-edition="{{ uc.ctoon.edition }}"
+                 data-minted="{{ uc.ctoon.minted }}"
+                 data-mint-count="{{ uc.ctoon.mint_count }}"
+                 data-cmart-value="{{ uc.ctoon.cmart_value }}"
+                 data-release-date="{{ uc.ctoon.release_date.isoformat() if uc.ctoon.release_date else '' }}"
+                 data-mint-number="{{ uc.mint_number }}"
+                 title="{{ uc.ctoon.name }} #{{ uc.mint_number }}"
+                 draggable="false">
+            {% else %}
+            <p style="font-size:0.7rem;color:rgba(255,255,255,0.45);font-style:italic;grid-column:1/-1;padding:6px 2px;">No cToons owned yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Background tab -->
+    <div class="czew-tab-panel" id="czew-panel-bg">
+        <div class="czew-bg-grid" id="czew-bg-grid">
+            <div class="czew-bg-item czew-bg-none {% if not current_bg %}czew-bg-item--active{% endif %}"
+                 data-bg="" title="No background">None</div>
+            {% for bg in czone_backgrounds %}
+            <img class="czew-bg-item {% if current_bg == bg %}czew-bg-item--active{% endif %}"
+                 src="/czone-bg/{{ bg }}"
+                 alt="{{ bg }}"
+                 data-bg="{{ bg }}"
+                 title="{{ bg }}">
+            {% else %}
+            {% if not current_bg %}{# "None" item is already shown, just add empty hint #}{% endif %}
+            <p style="font-size:0.65rem;color:rgba(255,255,255,0.4);font-style:italic;grid-column:1/-1;padding:4px 2px;">No backgrounds uploaded yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    // Tab switching
+    document.querySelectorAll('.czew-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            document.querySelectorAll('.czew-tab').forEach(function (t) { t.classList.remove('active'); });
+            document.querySelectorAll('.czew-tab-panel').forEach(function (p) { p.classList.remove('active'); });
+            tab.classList.add('active');
+            var panel = document.getElementById('czew-panel-' + tab.dataset.czewTab);
+            if (panel) panel.classList.add('active');
+        });
+    });
+
+    // Populate series dropdown
+    var seriesSelect = document.getElementById('czew-series');
+    if (seriesSelect) {
+        var seriesVals = new Set();
+        document.querySelectorAll('.czew-toon').forEach(function (el) {
+            if (el.dataset.series) seriesVals.add(el.dataset.series);
+        });
+        Array.from(seriesVals).sort().forEach(function (v) {
+            var opt = document.createElement('option');
+            opt.value = v; opt.textContent = v;
+            seriesSelect.appendChild(opt);
+        });
+    }
+
+    // Filter
+    var searchInput  = document.getElementById('czew-search');
+    var activeRarities = new Set();
+
+    function applyFilter() {
+        var name   = (searchInput ? searchInput.value : '').toLowerCase();
+        var series = seriesSelect ? seriesSelect.value : '';
+        document.querySelectorAll('.czew-toon').forEach(function (img) {
+            var visible = true;
+            if (name   && !(img.dataset.name   || '').toLowerCase().includes(name))   visible = false;
+            if (series &&  (img.dataset.series || '') !== series)                      visible = false;
+            if (activeRarities.size && !activeRarities.has(img.dataset.rarity || '')) visible = false;
+            img.style.display = visible ? '' : 'none';
+        });
+    }
+
+    document.querySelectorAll('.czew-rb').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var r = btn.dataset.czewRarity;
+            if (activeRarities.has(r)) { activeRarities.delete(r); btn.classList.remove('active'); }
+            else                        { activeRarities.add(r);    btn.classList.add('active'); }
+            applyFilter();
+        });
+    });
+
+    if (searchInput)  searchInput.addEventListener('input', applyFilter);
+    if (seriesSelect) seriesSelect.addEventListener('change', applyFilter);
+
+    // Background selection
+    document.querySelectorAll('.czew-bg-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+            var filename = item.dataset.bg || null;
+            fetch('/czone/set-background', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: filename }),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) return;
+                document.querySelectorAll('.czew-bg-item').forEach(function (i) {
+                    i.classList.remove('czew-bg-item--active');
+                });
+                item.classList.add('czew-bg-item--active');
+                if (window.czoneSetCanvasBg) window.czoneSetCanvasBg(d.bg_url || null);
+            });
+        });
+    });
+})();
+</script>

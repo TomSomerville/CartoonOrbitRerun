@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+
+{% block sidebar_middle %}
+{% if is_own %}
+{% include '_czone_edit_widget.html' %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Remove the reserved scrollbar gutter — czone never scrolls */
+    .main-content {
+        scrollbar-gutter: auto;
+        overflow: hidden;
+    }
+
+    .czone-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: var(--OrbitDarkBlue);
+        overflow: hidden;
+    }
+
+    /* ── Top bar ── */
+    .czone-topbar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 6px;
+        background: var(--OrbitLightBlue);
+        flex-shrink: 0;
+        border-bottom: 2px solid var(--OrbitDarkBlue);
+    }
+
+    .czone-build-btn {
+        background: #f47b00;
+        color: #ffffff;
+        border: 2px solid #c05a00;
+        border-radius: 4px;
+        padding: 3px 10px;
+        font-size: 0.72rem;
+        font-weight: bold;
+        cursor: pointer;
+        white-space: nowrap;
+        text-decoration: none;
+        display: inline-block;
+        line-height: 1.4;
+    }
+    .czone-build-btn:hover { filter: brightness(1.1); }
+
+    .czone-owner-info {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-left: auto;
+        background: var(--OrbitDarkBlue);
+        border-radius: 4px;
+        padding: 2px 8px 2px 4px;
+    }
+
+    .czone-owner-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .czone-owner-label {
+        font-size: 0.68rem;
+        color: #ffffff;
+        white-space: nowrap;
+    }
+
+    .czone-owner-prefix {
+        color: rgba(255,255,255,0.55);
+        margin-right: 3px;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .czone-owner-name {
+        font-weight: bold;
+    }
+
+    /* ── Main area ── */
+    .czone-main {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* ── Canvas ── */
+    .czone-canvas {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background-color: var(--OrbitDarkBlue);
+        background-size: 40px 40px, 40px 40px, cover;
+        background-position: 0 0, 0 0, center;
+        background-repeat: repeat, repeat, no-repeat;
+        cursor: default;
+    }
+
+    .czone-canvas.build-active {
+        cursor: crosshair;
+    }
+
+    .czone-item {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        cursor: default;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    .build-active .czone-item {
+        cursor: grab;
+    }
+
+
+    /* ── Ghost element while dragging ── */
+    .czone-ghost {
+        position: fixed;
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        pointer-events: none;
+        opacity: 0.75;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+    }
+
+    /* ── Bottom bar ── */
+    .czone-bottombar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 8px;
+        background: var(--OrbitLightBlue);
+        border-top: 2px solid var(--OrbitDarkBlue);
+        flex-shrink: 0;
+    }
+
+    .czone-points {
+        font-size: 0.72rem;
+        font-weight: bold;
+        color: #ffffff;
+        background: var(--OrbitDarkBlue);
+        border-radius: 4px;
+        padding: 2px 8px;
+    }
+
+    .czone-nav {
+        display: flex;
+        gap: 0;
+        align-items: center;
+        line-height: 0;
+        font-size: 0;
+    }
+
+    .czone-nav-btn {
+        display: block;
+        flex-shrink: 0;
+        line-height: 0;
+        font-size: 0;
+    }
+
+    .czone-nav-btn img {
+        display: block;
+        height: 22px;
+        width: auto;
+    }
+
+    .czone-nav-btn:hover { filter: brightness(1.1); }
+
+    .czone-build-hint {
+        font-size: 0.62rem;
+        color: rgba(255,255,255,0.6);
+        font-style: italic;
+    }
+</style>
+
+<div class="czone-wrapper" id="czone-wrapper">
+
+    <!-- Top bar -->
+    <div class="czone-topbar">
+        {% if is_own %}
+        <button class="czone-build-btn" id="czone-build-btn">CLICK HERE TO BUILD!</button>
+        <button class="czone-build-btn" id="czone-remove-all-btn"
+                style="display:none; background:#b03a2e; border-color:#922b21;">REMOVE ALL</button>
+        {% else %}
+        <a class="czone-build-btn" href="/czone">&#9664; BACK TO MY CZONE!</a>
+        {% endif %}
+
+        <div class="czone-owner-info">
+            <img class="czone-owner-avatar" src="{{ avatar_url }}" alt="{{ czone_owner.username or czone_owner.discord_username }}">
+            <div class="czone-owner-label">
+                <span class="czone-owner-prefix">OWNER:</span>
+                <span class="czone-owner-name">{{ czone_owner.username or czone_owner.discord_username }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main area: canvas only -->
+    <div class="czone-main" id="czone-main">
+        <div class="czone-canvas" id="czone-canvas">
+            {% for item in czone_items %}
+            <img class="czone-item ctoon-infocard-trigger"
+                 src="{{ item.ctoon.image_url }}"
+                 alt="{{ item.ctoon.name }}"
+                 data-item-id="{{ item.id }}"
+                 data-ctoon-id="{{ item.ctoon.id }}"
+                 data-name="{{ item.ctoon.name }}"
+                 data-image="{{ item.ctoon.image_url }}"
+                 data-rarity="{{ item.ctoon.rarity }}"
+                 data-series="{{ item.ctoon.series or '' }}"
+                 data-set="{{ item.ctoon.ctoon_set or '' }}"
+                 data-edition="{{ item.ctoon.edition }}"
+                 data-minted="{{ item.ctoon.minted }}"
+                 data-mint-count="{{ item.ctoon.mint_count }}"
+                 data-cmart-value="{{ item.ctoon.cmart_value }}"
+                 data-release-date="{{ item.ctoon.release_date.isoformat() if item.ctoon.release_date else '' }}"
+                 data-mint-number="{{ ctoon_mint_map.get(item.ctoon_id, '') }}"
+                 draggable="false"
+                 style="left:{{ item.position_x }}px; top:{{ item.position_y }}px; z-index:{{ item.z_index }};">
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="czone-bottombar">
+        <div class="czone-points">
+            MY POINTS:
+            {% if current_user %}
+            <span id="user-points">{{ current_user.points }}</span>
+            {% else %}
+            —
+            {% endif %}
+        </div>
+
+        {% if is_own %}
+        <span class="czone-build-hint" id="czone-build-hint"></span>
+        {% endif %}
+
+        <div class="czone-nav">
+            <a class="czone-nav-btn" href="/czone/nav/first" title="First cZone"><img src="/static/czonebuttons/ten_left.gif" alt="|◄"></a>
+            <a class="czone-nav-btn" href="/czone/nav/prev/{{ czone_owner.id }}" title="Previous cZone"><img src="/static/czonebuttons/one_left.gif" alt="◄"></a>
+            <a class="czone-nav-btn" href="/czone/nav/random" title="Random cZone"><img src="/static/czonebuttons/rand.gif" alt="⊙"></a>
+            <a class="czone-nav-btn" href="/czone/nav/next/{{ czone_owner.id }}" title="Next cZone"><img src="/static/czonebuttons/one_right.gif" alt="►"></a>
+            <a class="czone-nav-btn" href="/czone/nav/last" title="Last cZone"><img src="/static/czonebuttons/ten_right.gif" alt="►|"></a>
+        </div>
+    </div>
+</div>
+
+<!-- Canvas background — runs for all visitors -->
+<script>
+(function () {
+    var canvas = document.getElementById('czone-canvas');
+    if (!canvas) return;
+    var GRID = 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)';
+    function setCanvasBg(url) {
+        if (url) {
+            canvas.style.backgroundImage = GRID + ", url('" + url + "')";
+            canvas.style.backgroundSize     = '40px 40px, 40px 40px, cover';
+            canvas.style.backgroundPosition = '0 0, 0 0, center';
+        } else {
+            canvas.style.backgroundImage    = GRID;
+            canvas.style.backgroundSize     = '40px 40px';
+            canvas.style.backgroundPosition = '0 0';
+        }
+    }
+    window.czoneSetCanvasBg = setCanvasBg;
+    setCanvasBg({{ canvas_bg_url | tojson }});
+})();
+</script>
+
+{% if is_own %}
+<script>
+(function () {
+    var buildMode = false;
+    var dragging  = null;
+
+    var buildBtn        = document.getElementById('czone-build-btn');
+    var removeAllBtn    = document.getElementById('czone-remove-all-btn');
+    var canvas          = document.getElementById('czone-canvas');
+    var buildHint       = document.getElementById('czone-build-hint');
+    var sidebarTop      = document.querySelector('.sidebar-top');
+    var sidebarBottom   = document.querySelector('.sidebar-bottom');
+    var sidebarMiddle   = document.querySelector('.sidebar-middle');
+
+    /* ── Enter / exit build mode ── */
+    function enterBuildMode() {
+        buildMode = true;
+        buildBtn.textContent = 'Save cZone';
+        if (removeAllBtn) removeAllBtn.style.display = '';
+        canvas.classList.add('build-active');
+        buildHint.textContent = 'Drag cToons onto canvas \u2022 Right-click to remove';
+        if (sidebarTop)    sidebarTop.style.display    = 'none';
+        if (sidebarBottom) sidebarBottom.style.display = 'none';
+        if (sidebarMiddle) {
+            sidebarMiddle.style.display       = 'flex';
+            sidebarMiddle.style.flexDirection = 'column';
+            sidebarMiddle.style.flex          = '1';
+            sidebarMiddle.style.height        = 'auto';
+            sidebarMiddle.style.marginTop     = '0';
+            sidebarMiddle.style.overflow      = 'hidden';
+        }
+        var editWidget = document.getElementById('czew-wrapper');
+        if (editWidget) editWidget.style.display = 'flex';
+    }
+
+    function exitBuildMode() {
+        buildMode = false;
+        buildBtn.textContent    = 'CLICK HERE TO BUILD!';
+        buildBtn.disabled       = false;
+        if (removeAllBtn) removeAllBtn.style.display = 'none';
+        canvas.classList.remove('build-active');
+        buildHint.textContent = '';
+        if (sidebarTop)    sidebarTop.style.display    = '';
+        if (sidebarBottom) sidebarBottom.style.display = '';
+        if (sidebarMiddle) {
+            sidebarMiddle.style.display       = '';
+            sidebarMiddle.style.flexDirection = '';
+            sidebarMiddle.style.flex          = '';
+            sidebarMiddle.style.height        = '';
+            sidebarMiddle.style.marginTop     = '';
+            sidebarMiddle.style.overflow      = '';
+        }
+        var editWidget = document.getElementById('czew-wrapper');
+        if (editWidget) editWidget.style.display = 'none';
+    }
+
+    /* ── Return a canvas item back to the palette ── */
+    function returnToPalette(canvasEl) {
+        var grid = document.getElementById('czew-grid');
+        if (!grid) return;
+        var img = document.createElement('img');
+        img.className = 'czew-toon';
+        img.src       = canvasEl.src;
+        img.alt       = canvasEl.dataset.name || '';
+        img.draggable = false;
+        var mintNum   = canvasEl.dataset.mintNumber;
+        img.title = (canvasEl.dataset.name || '') + (mintNum ? ' #' + mintNum : '');
+        ['ctoonId','name','image','rarity','series','set','edition',
+         'minted','mintCount','cmartValue','releaseDate','mintNumber'].forEach(function (k) {
+            if (canvasEl.dataset[k] !== undefined) img.dataset[k] = canvasEl.dataset[k];
+        });
+        grid.appendChild(img);
+    }
+
+    /* ── Build button: enter build mode, or save and exit ── */
+    buildBtn.addEventListener('click', function () {
+        if (!buildMode) {
+            enterBuildMode();
+            return;
+        }
+
+        /* Collect all current canvas item positions and batch-save */
+        var items = [];
+        canvas.querySelectorAll('.czone-item').forEach(function (el) {
+            if (el.dataset.itemId) {
+                items.push({
+                    item_id: parseInt(el.dataset.itemId),
+                    x: parseInt(el.style.left) || 0,
+                    y: parseInt(el.style.top)  || 0,
+                });
+            }
+        });
+
+        buildBtn.textContent = 'Saving...';
+        buildBtn.disabled    = true;
+
+        fetch('/czone/save', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ items: items }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { exitBuildMode(); })
+        .catch(function () {
+            buildBtn.disabled    = false;
+            buildBtn.textContent = 'Save cZone';
+        });
+    });
+
+    /* ── Remove All button ── */
+    if (removeAllBtn) {
+        removeAllBtn.addEventListener('click', function () {
+            var items = Array.from(canvas.querySelectorAll('.czone-item'));
+            if (!items.length) return;
+            removeAllBtn.disabled = true;
+            fetch('/czone/clear', { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    removeAllBtn.disabled = false;
+                    if (!d.success) return;
+                    items.forEach(function (el) {
+                        returnToPalette(el);
+                        el.remove();
+                    });
+                })
+                .catch(function () { removeAllBtn.disabled = false; });
+        });
+    }
+
+    /* ── Ghost helper ── */
+    function createGhost(src, e) {
+        var ghost = document.createElement('img');
+        ghost.src = src;
+        ghost.className = 'czone-ghost';
+        ghost.style.left = e.clientX + 'px';
+        ghost.style.top  = e.clientY + 'px';
+        document.body.appendChild(ghost);
+        return ghost;
+    }
+
+    /* ── Block infocard clicks while in build mode ── */
+    canvas.addEventListener('click', function (e) {
+        if (buildMode) e.stopPropagation();
+    });
+
+    /* ── Palette drag: event delegation on document (works regardless of when
+          the sidebar widget is injected into the DOM by the SPA router) ── */
+    document.addEventListener('mousedown', function (e) {
+        var el = e.target.closest ? e.target.closest('.czew-toon') : null;
+        if (!el || !buildMode || e.button !== 0) return;
+        e.preventDefault();
+        dragging = {
+            type:      'palette',
+            ctoonId:   parseInt(el.dataset.ctoonId),
+            src:       el.src,
+            paletteEl: el,
+            ghost:     createGhost(el.src, e),
+        };
+    });
+
+    /* ── Canvas item: mousedown → reposition (left-click only) ── */
+    function attachItemHandlers(el) {
+        el.addEventListener('mousedown', function (e) {
+            if (!buildMode || e.button !== 0) return;
+            e.preventDefault();
+            el.style.visibility = 'hidden';
+            dragging = {
+                type:   'canvas',
+                itemId: parseInt(el.dataset.itemId),
+                srcEl:  el,
+                ghost:  createGhost(el.src, e),
+            };
+        });
+    }
+
+    document.querySelectorAll('.czone-item').forEach(attachItemHandlers);
+
+    /* ── Canvas right-click: remove (delegated on canvas so preventDefault is
+          reliable even on <img> elements where browsers may ignore per-element
+          contextmenu prevention) ── */
+    canvas.addEventListener('contextmenu', function (e) {
+        if (!buildMode) return;
+        e.preventDefault();
+        var el = e.target.closest('.czone-item');
+        if (!el) return;
+        fetch('/czone/remove/' + el.dataset.itemId, { method: 'POST' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d.success) {
+                    returnToPalette(el);
+                    el.remove();
+                }
+            });
+    });
+
+    /* ── Global mouse move: move ghost ── */
+    document.addEventListener('mousemove', function (e) {
+        if (!dragging) return;
+        dragging.ghost.style.left = e.clientX + 'px';
+        dragging.ghost.style.top  = e.clientY + 'px';
+    });
+
+    /* ── Global mouse up: drop ── */
+    document.addEventListener('mouseup', function (e) {
+        if (!dragging) return;
+        var ghost    = dragging.ghost;
+        var rect     = canvas.getBoundingClientRect();
+        var onCanvas = (e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top  && e.clientY <= rect.bottom);
+
+        var x = Math.round(e.clientX - rect.left - 35);
+        var y = Math.round(e.clientY - rect.top  - 35);
+        x = Math.max(0, Math.min(x, Math.round(rect.width  - 70)));
+        y = Math.max(0, Math.min(y, Math.round(rect.height - 70)));
+
+        if (onCanvas) {
+            if (dragging.type === 'palette') {
+                var ctoonId   = dragging.ctoonId;
+                var src       = dragging.src;
+                var paletteEl = dragging.paletteEl;
+                fetch('/czone/place', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ ctoon_id: ctoonId, x: x, y: y }),
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (!d.success) return;
+                    /* Remove ctoon from palette — one copy placed = one copy consumed */
+                    paletteEl.remove();
+                    var img = document.createElement('img');
+                    img.className       = 'czone-item ctoon-infocard-trigger';
+                    img.src             = src;
+                    img.draggable       = false;
+                    img.dataset.itemId  = d.item_id;
+                    img.dataset.ctoonId = ctoonId;
+                    img.style.left      = x + 'px';
+                    img.style.top       = y + 'px';
+                    img.style.zIndex    = d.z_index;
+                    /* Copy infocard data attributes from the palette item */
+                    ['name','image','rarity','series','set','edition',
+                     'minted','mintCount','cmartValue','releaseDate','mintNumber'].forEach(function (k) {
+                        if (paletteEl.dataset[k] !== undefined) img.dataset[k] = paletteEl.dataset[k];
+                    });
+                    canvas.appendChild(img);
+                    attachItemHandlers(img);
+                });
+            } else {
+                var itemId = dragging.itemId;
+                var srcEl  = dragging.srcEl;
+                fetch('/czone/move/' + itemId, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ x: x, y: y }),
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    srcEl.style.visibility = '';
+                    if (!d.success) return;
+                    srcEl.style.left   = x + 'px';
+                    srcEl.style.top    = y + 'px';
+                    srcEl.style.zIndex = d.z_index;
+                });
+            }
+        } else {
+            if (dragging.srcEl) dragging.srcEl.style.visibility = '';
+        }
+
+        ghost.remove();
+        dragging = null;
+    });
+})();
+</script>
+{% endif %}
+
+{% endblock %}

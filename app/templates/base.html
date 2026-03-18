@@ -12,6 +12,12 @@
             --sidebar-width: 220px;
             --main-width: calc(var(--site-width) - var(--sidebar-width));
 
+            /* brand colors */
+            /* 336699*/
+            --OrbitDarkBlue:  #336699;
+            /* 3399CC*/
+            --OrbitLightBlue: #3399CC;
+
             /* page */
             --page-bg: #003466;
             --page-bg-fade: 40px;
@@ -58,7 +64,7 @@
 
             /* hr-nav-left */
             --hr-nav-left-width: 240px;
-            --hr-nav-left-bg: #3399CC;
+            --hr-nav-left-bg: var(--OrbitLightBlue);
             --hr-nav-left-border-radius: 8px;
             --hr-nav-left-padding-top: 0px;
             --hr-nav-left-padding-bottom: 0px;
@@ -67,7 +73,7 @@
             --hr-nav-left-gap: 14px;
 
             /* hr-nav-right */
-            --hr-nav-right-bg: #336699;
+            --hr-nav-right-bg: var(--OrbitDarkBlue);
             --hr-nav-right-border-radius: 8px;
             --hr-nav-right-padding-top: 0px;
             --hr-nav-right-padding-bottom: 0px;
@@ -77,15 +83,15 @@
             --content-height: calc(var(--site-height) - var(--ad-bar-height) - var(--hr-nav-height) - var(--footer-height));
 
             /* layout */
-            --layout-bg: #336699;
+            --layout-bg: var(--OrbitDarkBlue);
             --layout-padding-top: 0px;
             --layout-padding-bottom: 5px;
 
             /* sidebar */
             --sidebar-width: 240px;
             --sidebar-height: 100%;
-            --sidebar-bg: #3399CC;
-            --sidebar-border-color: #3399CC;
+            --sidebar-bg: var(--OrbitLightBlue);
+            --sidebar-border-color: var(--OrbitLightBlue);
             --sidebar-border-width: 0px;
             --sidebar-border-radius: 6px;
             --sidebar-padding-top: 6px;
@@ -99,7 +105,7 @@
             --sidebar-top-width: 100%;
             --sidebar-top-height: 100px;
             --sidebar-top-border-radius: 6px;
-            --sidebar-top-bg: #2a5580;
+            --sidebar-top-bg: var(--OrbitDarkBlue);
             --sidebar-top-padding-top: 8px;
             --sidebar-top-padding-bottom: 8px;
             --sidebar-top-padding-left: 8px;
@@ -107,9 +113,9 @@
 
             /* sidebar-middle */
             --sidebar-middle-width: 100%;
-            --sidebar-middle-height: 280px;
+            --sidebar-middle-height: 290px;
             --sidebar-middle-border-radius: 6px;
-            --sidebar-middle-bg: #2a5580;
+            --sidebar-middle-bg: var(--OrbitDarkBlue);
             --sidebar-middle-padding-top: 8px;
             --sidebar-middle-padding-bottom: 8px;
             --sidebar-middle-padding-left: 8px;
@@ -119,7 +125,7 @@
             --sidebar-bottom-width: 100%;
             --sidebar-bottom-height: 100;
             --sidebar-bottom-border-radius: 6px;
-            --sidebar-bottom-bg: transparent;
+            --sidebar-bottom-bg: var(--OrbitDarkBlue);
             --sidebar-bottom-padding-top: 0px;
             --sidebar-bottom-padding-bottom: 0px;
             --sidebar-bottom-padding-left: 0px;
@@ -127,9 +133,8 @@
 
             /* main-content */
             --main-content-height: 100%;
-            --main-content-bg: #3399CC;
-            --main-content-border-color: #3399CC;
-            --main-content-border-width: 0px;
+            --main-content-border-color: var(--OrbitLightBlue);
+            --main-content-border-width: 4px;
             --main-content-border-radius: 8px;
             --main-content-padding-top: 0px;
             --main-content-padding-bottom: 0px;
@@ -160,6 +165,7 @@
             flex-direction: column;
             background: transparent;
             overflow: hidden;
+            position: relative;
             padding-top: var(--site-padding-top);
             padding-bottom: var(--site-padding-bottom);
             padding-left: var(--site-padding-left);
@@ -185,8 +191,8 @@
             display: flex;
             height: var(--ad-bar-height);
             flex-shrink: 0;
-            background: #336699;
-            border: var(--ad-bar-border) solid #336699;
+            background: var(--OrbitDarkBlue);
+            border: var(--ad-bar-border) solid var(--OrbitDarkBlue);
             border-radius: 8px;
         }
 
@@ -275,6 +281,10 @@
             object-position: right center;
             transform: scale(var(--ad-bar-rewatch-scale));
             transform-origin: center center;
+        }
+
+        .hr-nav--hidden {
+            visibility: hidden;
         }
 
         .hr-nav {
@@ -418,7 +428,6 @@
             flex: 1;
             min-width: 0;
             height: var(--main-content-height);
-            background: var(--main-content-bg);
             border: var(--main-content-border-width) solid var(--main-content-border-color);
             border-radius: var(--main-content-border-radius);
             padding-top: var(--main-content-padding-top);
@@ -426,6 +435,8 @@
             padding-left: var(--main-content-padding-left);
             padding-right: var(--main-content-padding-right);
             overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-gutter: stable;
         }
 
         .card {
@@ -459,6 +470,29 @@
             transform: translateY(3px);
         }
 
+        .layout--no-sidebar .sidebar {
+            display: none;
+        }
+
+        .layout--expand-sidebar-middle .sidebar-bottom {
+            display: none;
+        }
+
+        .layout--expand-sidebar-middle .sidebar-middle {
+            flex-grow: 1;
+            height: auto;
+            margin-top: var(--sidebar-gap);
+        }
+
+        .no-footer {
+            --footer-height: 0px;
+            --content-height: calc(var(--site-height) - var(--ad-bar-height) - var(--hr-nav-height));
+        }
+
+        .no-footer .footer {
+            display: none;
+        }
+
         .footer {
             height: var(--footer-height);
             background: transparent;
@@ -470,9 +504,10 @@
             flex-shrink: 0;
         }
     </style>
+    {% block head %}{% endblock %}
 </head>
 <body>
-    <div class="site-container">
+    <div class="site-container{% block no_footer %}{% endblock %}">
         <header class="top-bar">
             <div class="ad-bar">
                 <div class="ad-bar-logo"><img src="/static/logo.gif" alt="Logo"></div>
@@ -484,25 +519,36 @@
                 </div>
                 <div class="ad-bar-rewatch"><img src="/static/rewatch.gif" alt=""></div>
             </div>
-            <div class="hr-nav">
+            <div class="hr-nav{% if not current_user or not current_user.username %} hr-nav--hidden{% endif %}">
                 <div class="hr-nav-left">
                     <a class="btn" href="/" style="color: #ffffff;">Home</a>
-                    <a class="btn" href="/czonehome" style="color: #ffffff;">Czonehome</a>
+                    {% if current_user and current_user.is_admin %}
+                    <a class="btn" href="/admin" style="color: #ffffff;" data-full-nav>Admin</a>
+                    {% endif %}
                 </div>
                 <div class="hr-nav-right">
-                    {% if session.get('user_id') %}
-                        <a class="btn" href="/logout" style="color: #ffffff;">Logout</a>
-                    {% else %}
-                        <a class="btn" href="/login" style="color: #ffffff;">Login</a>
-                    {% endif %}
+                    <a class="btn" href="/czone" style="color: #ffffff;">My cZone</a>
+                    <a class="btn" href="/cmart" style="color: #ffffff;">cMart</a>
+                    <a class="btn" href="/collection" style="color: #ffffff;">Collection</a>
+                    <a class="btn" href="/logout" style="color: #ffffff; margin-left: auto;" data-full-nav>Logout</a>
                 </div>
             </div>
         </header>
 
-        <div class="layout">
+        <div class="layout{% block hide_sidebar %}{% endblock %}{% block expand_sidebar_middle %}{% endblock %}">
             <aside class="sidebar">
-                <div class="sidebar-top"></div>
-                <div class="sidebar-middle"></div>
+                <div class="sidebar-top">
+                    {% if current_user %}
+                        {% include '_user_widget.html' %}
+                    {% endif %}
+                </div>
+                <div class="sidebar-middle">
+                    {% block sidebar_middle %}
+                    {% if not current_user %}
+                        {% include '_login_widget.html' %}
+                    {% endif %}
+                    {% endblock %}
+                </div>
                 <div class="sidebar-bottom">
                     {% if eventbottom_gifs %}
                         <img id="eventbottom-gif" src="" alt="">
@@ -518,6 +564,8 @@
         <div class="footer">
             Site in active development
         </div>
+
+        {% include '_ctoon_infocard.html' %}
     </div>
     {% if eventbottom_gifs %}
     <script>
@@ -580,6 +628,24 @@
     <script>
         (function () {
             const mainContent = document.querySelector('.main-content');
+            const layout = document.querySelector('.layout');
+            const siteContainer = document.querySelector('.site-container');
+
+            function runScripts(container) {
+                container.querySelectorAll('script').forEach(function (oldScript) {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(function (attr) {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+                    newScript.textContent = oldScript.textContent;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+            }
+
+            function swapHTML(target, source) {
+                target.innerHTML = source.innerHTML;
+                runScripts(target);
+            }
 
             function navigate(url) {
                 fetch(url)
@@ -588,9 +654,22 @@
                         const doc = new DOMParser().parseFromString(html, 'text/html');
                         const incoming = doc.querySelector('.main-content');
                         if (incoming) {
-                            mainContent.innerHTML = incoming.innerHTML;
+                            swapHTML(mainContent, incoming);
                             document.title = doc.title;
                             history.pushState(null, doc.title, url);
+                            const incomingLayout = doc.querySelector('.layout');
+                            if (incomingLayout) {
+                                layout.className = incomingLayout.className;
+                            }
+                            const incomingSC = doc.querySelector('.site-container');
+                            if (incomingSC) {
+                                siteContainer.classList.toggle('no-footer', incomingSC.classList.contains('no-footer'));
+                            }
+                            const incomingSidebarMiddle = doc.querySelector('.sidebar-middle');
+                            const sidebarMiddle = document.querySelector('.sidebar-middle');
+                            if (incomingSidebarMiddle && sidebarMiddle) {
+                                swapHTML(sidebarMiddle, incomingSidebarMiddle);
+                            }
                         }
                     });
             }
@@ -598,9 +677,11 @@
             document.querySelector('.site-container').addEventListener('click', function (e) {
                 const link = e.target.closest('a[href]');
                 if (!link) return;
+                if (link.hasAttribute('data-full-nav')) return;
                 const href = link.getAttribute('href');
                 if (!href || href.startsWith('http') || href.startsWith('//') ||
-                    href.startsWith('#') || href.startsWith('mailto:')) return;
+                    href.startsWith('#') || href.startsWith('mailto:') ||
+                    href.startsWith('/auth/')) return;
                 e.preventDefault();
                 navigate(href);
             });

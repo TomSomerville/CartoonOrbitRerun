@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% set cf_hide_duplicates = true %}
+
+{% block expand_sidebar_middle %} layout--expand-sidebar-middle{% endblock %}
+
+{% block sidebar_middle %}{% include '_ctoon_filter.html' %}{% endblock %}
+
+{% block content %}
+{% include '_ctoon_shortcard.html' %}
+<style>
+    /* ── Collection-specific variables ── */
+    :root {
+        --sc-card-footer-bg:   var(--OrbitDarkBlue);
+        --sc-card-mint-color:  rgba(255,255,255,0.85);
+    }
+
+    .shortcard-mint {
+        height: var(--sc-card-footer-height);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--sc-card-footer-bg);
+        color: var(--sc-card-mint-color);
+        border-radius: var(--sc-card-footer-radius);
+        padding: 0 8px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        white-space: nowrap;
+        width: 100%;
+    }
+</style>
+
+<div class="shortcard-page">
+    {% if user_ctoons %}
+        {% for uc in user_ctoons %}
+        <div class="shortcard">
+            <div class="shortcard-img-wrap">
+                <img class="shortcard-img ctoon-infocard-trigger" src="{{ uc.ctoon.image_url }}" alt="{{ uc.ctoon.name }}"
+                    data-context="collection"
+                    data-ctoon-id="{{ uc.ctoon.id }}"
+                    data-name="{{ uc.ctoon.name }}"
+                    data-image="{{ uc.ctoon.image_url }}"
+                    data-rarity="{{ uc.ctoon.rarity }}"
+                    data-series="{{ uc.ctoon.series or '' }}"
+                    data-set="{{ uc.ctoon.ctoon_set or '' }}"
+                    data-edition="{{ uc.ctoon.edition }}"
+                    data-minted="{{ uc.ctoon.minted }}"
+                    data-mint-count="{{ uc.ctoon.mint_count }}"
+                    data-cmart-value="{{ uc.ctoon.cmart_value }}"
+                    data-mint-number="{{ uc.mint_number }}"
+                    data-description="{{ uc.ctoon.description or '' }}"
+                    data-release-date="{{ uc.ctoon.release_date.isoformat() if uc.ctoon.release_date else '' }}">
+            </div>
+            <div class="shortcard-footer">
+                <span class="shortcard-mint">
+                    #{{ uc.mint_number }}{% if uc.ctoon.mint_count > 0 %} / {{ uc.ctoon.mint_count }}{% endif %}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="shortcard-empty">Your collection is empty. Visit the <a href="/cmart">cMart</a> to get started!</p>
+    {% endif %}
+</div>
+{% endblock %}

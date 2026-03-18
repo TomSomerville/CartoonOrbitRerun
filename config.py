@@ -18,4 +18,12 @@ class Config:
     DB_NAME = os.getenv('DB_NAME', 'cartoon_orbit')
     DB_PORT = int(os.getenv('DB_PORT', 3306))
 
+    # cToon image storage — absolute path; leave empty to use app/static/ctoons/
+    CTOON_UPLOAD_DIR = os.getenv('CTOON_UPLOAD_DIR', '')
+
+    # Discord OAuth
+    DISCORD_CLIENT_ID = os.getenv('DISCORD_CLIENT_ID', '')
+    DISCORD_CLIENT_SECRET = os.getenv('DISCORD_CLIENT_SECRET', '')
+    DISCORD_REDIRECT_URI = os.getenv('DISCORD_REDIRECT_URI', 'http://localhost:5000/auth/discord/callback')
+
 config = Config()

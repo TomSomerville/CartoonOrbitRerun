@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% set cf_hide_unavailable = true %}
+
+{% block expand_sidebar_middle %} layout--expand-sidebar-middle{% endblock %}
+
+{% block sidebar_middle %}{% include '_ctoon_filter.html' %}{% endblock %}
+
+{% block content %}
+{% include '_ctoon_shortcard.html' %}
+<style>
+    /* ── cMart-specific variables ── */
+    :root {
+        --sc-card-price-color: #ffffff;
+        --sc-card-btn-bg:      var(--OrbitLightBlue);
+        --sc-card-btn-color:   #ffffff;
+
+        --sc-badge-display:    block;
+    }
+
+    .shortcard-price {
+        flex: 1;
+        min-width: 0;
+        height: var(--sc-card-footer-height);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--sc-card-footer-bg);
+        color: var(--sc-card-price-color);
+        border-radius: var(--sc-card-footer-radius);
+        padding: 0 6px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .shortcard-buy {
+        background: var(--sc-card-btn-bg);
+        color: var(--sc-card-btn-color);
+        border: none;
+        border-radius: var(--sc-card-footer-radius);
+        padding: 2px 8px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .shortcard-buy:hover {
+        filter: brightness(1.15);
+    }
+
+    .shortcard--sold-out {
+        opacity: 0.4;
+    }
+
+    .shortcard--sold-out .shortcard-footer {
+        pointer-events: none;
+    }
+
+    /* ── Toast notification ── */
+    #cmart-toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(60px);
+        background: #1a3a5c;
+        border: 2px solid var(--OrbitLightBlue);
+        color: #fff;
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        z-index: 2000;
+        pointer-events: none;
+        transition: transform 0.25s ease, opacity 0.25s ease;
+        opacity: 0;
+        white-space: nowrap;
+    }
+    #cmart-toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    #cmart-toast.toast-error {
+        border-color: #ef4444;
+        background: #3b0f0f;
+    }
+</style>
+<div id="cmart-toast"></div>
+
+<div class="shortcard-page">
+    {% if ctoons %}
+        {% for ctoon in ctoons %}
+        {% set sold_out = ctoon.mint_count > 0 and ctoon.minted >= ctoon.mint_count %}
+        {% set is_new = ctoon.release_date and ctoon.release_date >= new_cutoff %}
+        <div class="shortcard{% if sold_out %} shortcard--sold-out{% endif %}">
+            <div class="shortcard-img-wrap">
+                <img class="shortcard-img ctoon-infocard-trigger" src="{{ ctoon.image_url }}" alt="{{ ctoon.name }}"
+                    data-ctoon-id="{{ ctoon.id }}"
+                    data-name="{{ ctoon.name }}"
+                    data-image="{{ ctoon.image_url }}"
+                    data-rarity="{{ ctoon.rarity }}"
+                    data-series="{{ ctoon.series or '' }}"
+                    data-set="{{ ctoon.ctoon_set or '' }}"
+                    data-edition="{{ ctoon.edition }}"
+                    data-minted="{{ ctoon.minted }}"
+                    data-mint-count="{{ ctoon.mint_count }}"
+                    data-cmart-value="{{ ctoon.cmart_value }}"
+                    data-description="{{ ctoon.description or '' }}"
+                    data-release-date="{{ ctoon.release_date.isoformat() if ctoon.release_date else '' }}">
+            </div>
+            <div class="shortcard-footer">
+                <span class="shortcard-price">{{ ctoon.cmart_value }} PTS.</span>
+                <button class="shortcard-buy" data-ctoon-id="{{ ctoon.id }}"{% if sold_out %} disabled{% endif %}>BUY</button>
+            </div>
+            {% if sold_out %}
+                <img class="shortcard-badge shortcard-badge--soldout" src="/static/soldout.png" alt="Sold Out">
+            {% elif is_new %}
+                <img class="shortcard-badge shortcard-badge--new" src="/static/new.png" alt="New">
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="shortcard-empty">No items are currently available in the cMart.</p>
+    {% endif %}
+</div>
+<script>
+    document.querySelectorAll('.shortcard-price').forEach(function (el) {
+        var maxSize = 12;
+        var minSize = 6;
+        el.style.fontSize = maxSize + 'px';
+        while (el.scrollWidth > el.clientWidth && maxSize > minSize) {
+            maxSize -= 0.5;
+            el.style.fontSize = maxSize + 'px';
+        }
+    });
+
+    (function () {
+        var toastEl = document.getElementById('cmart-toast');
+        var toastTimer = null;
+
+        function showToast(msg, isError) {
+            toastEl.textContent = msg;
+            toastEl.classList.toggle('toast-error', !!isError);
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function () {
+                toastEl.classList.remove('show');
+            }, 3000);
+        }
+
+        document.querySelector('.shortcard-page').addEventListener('click', function (e) {
+            var btn = e.target.closest('.shortcard-buy');
+            if (!btn) return;
+
+            var ctoonId = btn.dataset.ctoonId;
+            var card = btn.closest('.shortcard');
+            btn.disabled = true;
+
+            fetch('/cmart/buy/' + ctoonId, { method: 'POST' })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+                .then(function (res) {
+                    if (res.ok) {
+                        showToast('Got ' + res.data.ctoon_name + ' #' + res.data.mint_number + '!  ' + res.data.new_points + ' PTS. remaining');
+                        var pts = document.getElementById('user-points');
+                        if (pts) pts.textContent = res.data.new_points + ' PTS.';
+                        if (res.data.sold_out && card) {
+                            card.classList.add('shortcard--sold-out');
+                        } else {
+                            btn.disabled = false;
+                        }
+                    } else {
+                        showToast(res.data.message || 'Could not complete purchase.', true);
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function () {
+                    showToast('Network error. Please try again.', true);
+                    btn.disabled = false;
+                });
+        });
+    })();
+</script>
+{% endblock %}

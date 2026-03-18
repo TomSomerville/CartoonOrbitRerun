@@ -1,0 +1,503 @@
+<style>
+    .ctoon-filter {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        height: 100%;
+        overflow-y: auto;
+        padding: 6px 4px;
+        box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: var(--OrbitDarkBlue) transparent;
+    }
+
+    .cf-section-label {
+        font-size: 0.6rem;
+        font-weight: bold;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.5);
+        margin-bottom: 2px;
+    }
+
+    /* ── Search ── */
+    .cf-search {
+        display: flex;
+        align-items: center;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 20px;
+        padding: 3px 8px;
+        gap: 4px;
+    }
+
+    .cf-search-icon { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+
+    .cf-search input {
+        background: none;
+        border: none;
+        outline: none;
+        color: #ffffff;
+        font-size: 0.75rem;
+        width: 100%;
+        padding: 0;
+    }
+
+    .cf-search input::placeholder { color: rgba(255,255,255,0.35); }
+
+    /* ── Rarity badges ── */
+    .cf-rarity-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .cf-rarity-btn {
+        border: none;
+        border-radius: 4px;
+        padding: 2px 5px;
+        font-size: 0.6rem;
+        font-weight: bold;
+        cursor: pointer;
+        opacity: 0.4;
+        transition: opacity 0.15s;
+        white-space: nowrap;
+    }
+
+    .cf-rarity-btn.active { opacity: 1; }
+    .cf-rarity-btn:hover   { opacity: 0.85; }
+
+    .cf-rb-common      { background: #6b7280; color: #fff; }
+    .cf-rb-uncommon    { background: #e5e7eb; color: #111; }
+    .cf-rb-rare        { background: #16a34a; color: #fff; }
+    .cf-rb-very-rare   { background: #2563eb; color: #fff; }
+    .cf-rb-crazy-rare  { background: #7c3aed; color: #fff; }
+    .cf-rb-prize-only  { background: #111;    color: #e5e7eb; }
+    .cf-rb-code-only   { background: #ea580c; color: #fff; }
+    .cf-rb-auction-only{ background: #eab308; color: #111; }
+
+    /* ── Dropdowns ── */
+    .cf-select {
+        width: 100%;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 6px;
+        color: #ffffff;
+        font-size: 0.72rem;
+        padding: 3px 6px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .cf-select option { background: #1a3a58; }
+
+    /* ── Price range ── */
+    .cf-price-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .cf-price-input {
+        flex: 1;
+        min-width: 0;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 6px;
+        color: #ffffff;
+        font-size: 0.72rem;
+        padding: 3px 5px;
+        outline: none;
+        width: 100%;
+    }
+
+    .cf-price-sep { color: rgba(255,255,255,0.4); font-size: 0.7rem; }
+
+    /* ── Sort ── */
+    .cf-sort-row {
+        display: flex;
+        gap: 4px;
+    }
+
+    .cf-sort-dir {
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 6px;
+        color: #ffffff;
+        font-size: 0.8rem;
+        padding: 2px 7px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    /* ── Page-specific checkbox filters ── */
+    .cf-checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .cf-checkbox-row input[type="checkbox"] {
+        accent-color: var(--OrbitLightBlue);
+        width: 12px;
+        height: 12px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .cf-checkbox-row span {
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.85);
+        line-height: 1.2;
+    }
+
+    /* ── Clear button ── */
+    .cf-clear {
+        width: 100%;
+        padding: 4px;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(0,0,0,0.2);
+        color: rgba(255,255,255,0.6);
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        margin-top: auto;
+    }
+
+    .cf-clear:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* ── Divider ── */
+    .cf-divider {
+        border: none;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        margin: 0;
+    }
+</style>
+
+<div class="ctoon-filter" id="ctoon-filter">
+
+    <!-- Search -->
+    <div class="cf-search">
+        <span class="cf-search-icon">&#9906;</span>
+        <input type="text" id="cf-name" placeholder="Search name...">
+    </div>
+
+    <hr class="cf-divider">
+
+    <!-- Rarity -->
+    <div>
+        <div class="cf-section-label">Rarity</div>
+        <div class="cf-rarity-grid">
+            <button class="cf-rarity-btn cf-rb-common"       data-rarity="common">C</button>
+            <button class="cf-rarity-btn cf-rb-uncommon"     data-rarity="uncommon">U</button>
+            <button class="cf-rarity-btn cf-rb-rare"         data-rarity="rare">R</button>
+            <button class="cf-rarity-btn cf-rb-very-rare"    data-rarity="very rare">VR</button>
+            <button class="cf-rarity-btn cf-rb-crazy-rare"   data-rarity="crazy rare">CR</button>
+            <button class="cf-rarity-btn cf-rb-prize-only"   data-rarity="prize only">PO</button>
+            <button class="cf-rarity-btn cf-rb-code-only"    data-rarity="code only">CO</button>
+            <button class="cf-rarity-btn cf-rb-auction-only" data-rarity="auction only">AO</button>
+        </div>
+    </div>
+
+    <hr class="cf-divider">
+
+    <!-- Series -->
+    <div>
+        <div class="cf-section-label">Series</div>
+        <select class="cf-select" id="cf-series">
+            <option value="">All Series</option>
+        </select>
+    </div>
+
+    <!-- Set -->
+    <div>
+        <div class="cf-section-label">Set</div>
+        <select class="cf-select" id="cf-set">
+            <option value="">All Sets</option>
+        </select>
+    </div>
+
+    <hr class="cf-divider">
+
+    <!-- Price -->
+    <div>
+        <div class="cf-section-label">Price (PTS.)</div>
+        <div class="cf-price-row">
+            <input class="cf-price-input" type="number" id="cf-price-min" placeholder="Min" min="0">
+            <span class="cf-price-sep">–</span>
+            <input class="cf-price-input" type="number" id="cf-price-max" placeholder="Max" min="0">
+        </div>
+    </div>
+
+    <hr class="cf-divider">
+
+    <!-- Sort -->
+    <div>
+        <div class="cf-section-label">Sort By</div>
+        <div class="cf-sort-row">
+            <select class="cf-select" id="cf-sort-field">
+                <option value="name">Name</option>
+                <option value="price">Price</option>
+                <option value="rarity">Rarity</option>
+            </select>
+            <button class="cf-sort-dir" id="cf-sort-dir" title="Toggle direction">▲</button>
+        </div>
+    </div>
+
+    <hr class="cf-divider">
+
+    {% if cf_hide_unavailable or cf_hide_duplicates %}
+    <!-- Page-specific filters -->
+    <div class="cf-page-filters">
+        {% if cf_hide_unavailable %}
+        <label class="cf-checkbox-row">
+            <input type="checkbox" id="cf-hide-unavailable">
+            <span>Hide unavailable</span>
+        </label>
+        {% endif %}
+        {% if cf_hide_duplicates %}
+        <label class="cf-checkbox-row">
+            <input type="checkbox" id="cf-hide-duplicates">
+            <span>Hide duplicates</span>
+        </label>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Clear -->
+    <button class="cf-clear" id="cf-clear">Clear Filters</button>
+
+</div>
+
+<script>
+(function () {
+    const RARITY_ORDER = {
+        'common':0,'uncommon':1,'rare':2,'very rare':3,
+        'crazy rare':4,'prize only':5,'code only':6,'auction only':7
+    };
+
+    // Populate series & set dropdowns from cards on the page
+    function populateDropdown(selectId, dataAttr) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        const vals = new Set();
+        document.querySelectorAll('[data-' + dataAttr + ']').forEach(function (el) {
+            const v = el.dataset[dataAttr];
+            if (v) vals.add(v);
+        });
+        Array.from(vals).sort().forEach(function (v) {
+            const opt = document.createElement('option');
+            opt.value = v; opt.textContent = v;
+            select.appendChild(opt);
+        });
+    }
+
+    function init() {
+        populateDropdown('cf-series', 'series');
+        populateDropdown('cf-set', 'set');
+
+        const nameInput   = document.getElementById('cf-name');
+        const seriesSelect= document.getElementById('cf-series');
+        const setSelect   = document.getElementById('cf-set');
+        const priceMin    = document.getElementById('cf-price-min');
+        const priceMax    = document.getElementById('cf-price-max');
+        const sortField   = document.getElementById('cf-sort-field');
+        const sortDirBtn  = document.getElementById('cf-sort-dir');
+        const clearBtn    = document.getElementById('cf-clear');
+        const rarityBtns  = document.querySelectorAll('.cf-rarity-btn');
+
+        let sortAsc = true;
+        let activeRarities = new Set();
+
+        rarityBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const r = btn.dataset.rarity;
+                if (activeRarities.has(r)) {
+                    activeRarities.delete(r);
+                    btn.classList.remove('active');
+                } else {
+                    activeRarities.add(r);
+                    btn.classList.add('active');
+                }
+                applyFilters();
+            });
+        });
+
+        sortDirBtn.addEventListener('click', function () {
+            sortAsc = !sortAsc;
+            sortDirBtn.textContent = sortAsc ? '▲' : '▼';
+            applyFilters();
+        });
+
+        [nameInput, seriesSelect, setSelect, priceMin, priceMax, sortField].forEach(function (el) {
+            if (el) el.addEventListener('input', applyFilters);
+        });
+
+        clearBtn.addEventListener('click', function () {
+            nameInput.value = '';
+            seriesSelect.value = '';
+            setSelect.value = '';
+            priceMin.value = '';
+            priceMax.value = '';
+            sortField.value = 'name';
+            sortAsc = true;
+            sortDirBtn.textContent = '▲';
+            activeRarities.clear();
+            rarityBtns.forEach(function (b) { b.classList.remove('active'); });
+            if (window.cfClearPageFilters) window.cfClearPageFilters();
+            applyFilters();
+        });
+
+        function applyFilters() {
+            const name    = (nameInput.value || '').toLowerCase();
+            const series  = seriesSelect.value.toLowerCase();
+            const set     = setSelect.value.toLowerCase();
+            const minVal  = priceMin.value !== '' ? parseInt(priceMin.value) : null;
+            const maxVal  = priceMax.value !== '' ? parseInt(priceMax.value) : null;
+            const field   = sortField.value;
+
+            const container = document.querySelector('.shortcard-page');
+            if (!container) return;
+            const cards = Array.from(container.querySelectorAll('.shortcard'));
+
+            cards.forEach(function (card) {
+                const img = card.querySelector('.shortcard-img');
+                if (!img) return;
+                const cardName    = (img.dataset.name || '').toLowerCase();
+                const cardRarity  = (img.dataset.rarity || '').toLowerCase();
+                const cardSeries  = (img.dataset.series || '').toLowerCase();
+                const cardSet     = (img.dataset.set || '').toLowerCase();
+                const cardPrice   = parseInt(img.dataset.cmartValue || '0');
+
+                let visible = true;
+                if (name   && !cardName.includes(name))       visible = false;
+                if (series && cardSeries !== series)           visible = false;
+                if (set    && cardSet !== set)                 visible = false;
+                if (minVal !== null && cardPrice < minVal)     visible = false;
+                if (maxVal !== null && cardPrice > maxVal)     visible = false;
+                if (activeRarities.size && !activeRarities.has(cardRarity)) visible = false;
+                if (visible && window.cfPageFilter && !window.cfPageFilter(card)) visible = false;
+
+                card.style.display = visible ? '' : 'none';
+            });
+
+            // Sort visible cards
+            const visible = cards.filter(function (c) { return c.style.display !== 'none'; });
+            visible.sort(function (a, b) {
+                const ai = a.querySelector('.shortcard-img');
+                const bi = b.querySelector('.shortcard-img');
+                let av, bv, cmp;
+                if (field === 'price') {
+                    av = parseInt(ai.dataset.cmartValue || '0');
+                    bv = parseInt(bi.dataset.cmartValue || '0');
+                    cmp = av - bv;
+                } else if (field === 'rarity') {
+                    av = RARITY_ORDER[(ai.dataset.rarity||'').toLowerCase()] ?? 99;
+                    bv = RARITY_ORDER[(bi.dataset.rarity||'').toLowerCase()] ?? 99;
+                    cmp = av - bv;
+                } else {
+                    av = (ai.dataset.name || '').toLowerCase();
+                    bv = (bi.dataset.name || '').toLowerCase();
+                    cmp = av < bv ? -1 : av > bv ? 1 : 0;
+                }
+                return sortAsc ? cmp : -cmp;
+            });
+            visible.forEach(function (c) { container.appendChild(c); });
+
+            if (window.cfPostFilter) window.cfPostFilter();
+        }
+
+        applyFilters();
+        window.cfApplyFilters = applyFilters;
+    }
+
+    // Run after content is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+
+{% if cf_hide_unavailable %}
+<script>
+(function () {
+    var chk = document.getElementById('cf-hide-unavailable');
+    if (!chk) return;
+
+    chk.addEventListener('change', function () {
+        if (window.cfApplyFilters) window.cfApplyFilters();
+    });
+
+    window.cfPageFilter = function (card) {
+        if (!chk.checked) return true;
+        var img = card.querySelector('.shortcard-img');
+        if (!img) return true;
+        var mintCount = parseInt(img.dataset.mintCount || '0');
+        var minted    = parseInt(img.dataset.minted    || '0');
+        return !(mintCount > 0 && minted >= mintCount);
+    };
+
+    window.cfClearPageFilters = function () { chk.checked = false; };
+})();
+</script>
+{% endif %}
+
+{% if cf_hide_duplicates %}
+<script>
+(function () {
+    var chk = document.getElementById('cf-hide-duplicates');
+    if (!chk) return;
+
+    chk.addEventListener('change', function () {
+        if (window.cfApplyFilters) window.cfApplyFilters();
+    });
+
+    window.cfPostFilter = function () {
+        // Restore original mint labels
+        document.querySelectorAll('.shortcard-mint').forEach(function (el) {
+            if (el.dataset.originalMint) el.textContent = el.dataset.originalMint;
+        });
+        if (!chk.checked) return;
+        var container = document.querySelector('.shortcard-page');
+        if (!container) return;
+        var seen = {};
+        Array.from(container.querySelectorAll('.shortcard')).forEach(function (card) {
+            if (card.style.display === 'none') return;
+            var img = card.querySelector('.shortcard-img');
+            if (!img) return;
+            var ctoonId = img.dataset.ctoonId || img.dataset.name;
+            if (!ctoonId) return;
+            if (!seen[ctoonId]) {
+                seen[ctoonId] = { card: card, count: 1 };
+            } else {
+                seen[ctoonId].count++;
+                card.style.display = 'none';
+            }
+        });
+        Object.values(seen).forEach(function (entry) {
+            var mintEl = entry.card.querySelector('.shortcard-mint');
+            if (mintEl) mintEl.textContent = '\u00d7' + entry.count + ' ' + (entry.count === 1 ? 'copy' : 'copies');
+        });
+    };
+
+    window.cfClearPageFilters = function () { chk.checked = false; };
+
+    // Store original mint labels once the cards exist
+    function storeMintLabels() {
+        document.querySelectorAll('.shortcard-mint').forEach(function (el) {
+            el.dataset.originalMint = el.textContent.trim();
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', storeMintLabels);
+    } else {
+        storeMintLabels();
+    }
+})();
+</script>
+{% endif %}

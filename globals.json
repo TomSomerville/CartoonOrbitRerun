@@ -1,0 +1,34 @@
+{
+  "common": {
+    "mint_count": 501,
+    "cmart_value": 100
+  },
+  "uncommon": {
+    "mint_count": 400,
+    "cmart_value": 200
+  },
+  "rare": {
+    "mint_count": 300,
+    "cmart_value": 400
+  },
+  "very rare": {
+    "mint_count": 200,
+    "cmart_value": 750
+  },
+  "crazy rare": {
+    "mint_count": 100,
+    "cmart_value": 1250
+  },
+  "prize only": {
+    "mint_count": -1,
+    "cmart_value": 200
+  },
+  "code only": {
+    "mint_count": -1,
+    "cmart_value": 200
+  },
+  "auction only": {
+    "mint_count": 100,
+    "cmart_value": 1250
+  }
+}

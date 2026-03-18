@@ -1,0 +1,112 @@
+<style>
+    .setup-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+    }
+
+    .setup-card {
+        background: #2a5580;
+        border-radius: 8px;
+        padding: 24px 28px;
+        width: 100%;
+        max-width: 320px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        color: #ffffff;
+    }
+
+    .setup-card h2 {
+        font-size: 1rem;
+        color: #c8e8ff;
+        margin-bottom: 6px;
+        text-align: center;
+    }
+
+    .setup-card .sub {
+        font-size: 0.75rem;
+        color: #a8ccdd;
+        text-align: center;
+        margin-bottom: 16px;
+        line-height: 1.4;
+    }
+
+    .setup-card .discord-name {
+        font-weight: bold;
+        color: #ffffff;
+    }
+
+    .setup-flash {
+        font-size: 0.75rem;
+        color: #ffdddd;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .setup-card label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: bold;
+        color: #c8e8ff;
+        margin-bottom: 4px;
+    }
+
+    .setup-card input[type="text"] {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #1a5f8a;
+        border-radius: 4px;
+        background: #1a3a56;
+        color: #ffffff;
+        font-size: 0.82rem;
+        box-sizing: border-box;
+        margin-bottom: 6px;
+    }
+
+    .setup-card input[type="text"]:focus {
+        outline: none;
+        border-color: #5bb8e8;
+        background: #1e4468;
+    }
+
+    .setup-card .hint {
+        font-size: 0.68rem;
+        color: #7aaacc;
+        margin-bottom: 14px;
+    }
+</style>
+
+<div class="setup-wrap">
+    <div class="setup-card">
+        <h2>One More Step!</h2>
+        <p class="sub">
+            Signed in as <span class="discord-name">{{ current_user.discord_username }}</span>.<br>
+            Choose a username for the site.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="setup-flash">
+                    {% for category, msg in messages %}
+                        <p>{{ msg }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="post" action="/auth/setup-username">
+            <label for="su-username">Username</label>
+            <input type="text" id="su-username" name="username"
+                   minlength="3" maxlength="50"
+                   pattern="[A-Za-z0-9_\-]+" required autofocus
+                   placeholder="e.g. CoolKid42">
+            <p class="hint">3–50 characters. Letters, numbers, _ and - only.</p>
+            <button type="submit" class="btn" style="width:100%; color:#ffffff;">
+                Set Username
+            </button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,1939 @@
+{% extends "base.html" %}
+
+{% block title %}Administration - CartoonOrbitRerun{% endblock %}
+{% block hide_sidebar %} layout--no-sidebar{% endblock %}
+{% block no_footer %} no-footer{% endblock %}
+
+{% block content %}
+<style>
+    .admin-page {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        font-family: Arial, sans-serif;
+    }
+
+    .admin-tabs {
+        display: flex;
+        flex-shrink: 0;
+        gap: 3px;
+        padding: 6px 8px 0 8px;
+        background: #2a5580;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .admin-tab {
+        padding: 5px 14px;
+        border-radius: 6px 6px 0 0;
+        border: 2px solid #1a5f8a;
+        border-bottom: none;
+        background: linear-gradient(to bottom, #3a7aaa 0%, #2a5f8a 100%);
+        color: #a8d4f0;
+        font-weight: bold;
+        font-size: 0.8rem;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.1s;
+    }
+
+    .admin-tab:hover {
+        background: linear-gradient(to bottom, #4a8aba 0%, #3a6f9a 100%);
+        color: #d0eaff;
+    }
+
+    .admin-tab.active {
+        background: linear-gradient(to bottom, #5bb8e8 0%, #2e8fc0 100%);
+        color: #ffffff;
+        border-color: #1a5f8a;
+    }
+
+    .admin-panel {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        background: #2a5580;
+        border-radius: 0 8px 8px 8px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    /* Analytics tab scrolls as a whole */
+    #tab-analytics.active {
+        display: block;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    /* Users tab scrolls only the table body */
+    #tab-users.active {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    #tab-users .user-admin-form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    /* ── Analytics ── */
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .stat-card {
+        background: #1e4a70;
+        border: 1px solid #1a5f8a;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        color: #ffffff;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #5bb8e8;
+        line-height: 1;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.72rem;
+        color: #a8d4f0;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .analytics-section-title {
+        color: #a8d4f0;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 8px;
+    }
+
+    .analytics-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+        color: #d0eaff;
+    }
+
+    .analytics-table th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #1a4060;
+        color: #a8d4f0;
+        text-align: left;
+        padding: 6px 10px;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .analytics-table th.sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .analytics-table th.sortable:hover { color: #d0eaff; background: #224f75; }
+    .analytics-table th.sort-asc::after  { content: ' ▲'; font-size: 0.6rem; }
+    .analytics-table th.sort-desc::after { content: ' ▼'; font-size: 0.6rem; }
+
+    .analytics-table-wrap {
+        background: #1e4a70;
+        border: 1px solid #1a5f8a;
+        border-radius: 8px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+        max-height: calc(5 * 28px + 32px); /* 5 data rows + thead */
+    }
+
+    .analytics-table td {
+        padding: 5px 10px;
+        border-bottom: 1px solid #1e4a70;
+    }
+
+    .analytics-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .analytics-table tr:hover td {
+        background: #1e4a70;
+    }
+
+    .table-wrap {
+        background: #1e4a70;
+        border: 1px solid #1a5f8a;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+
+    /* ── User Admin ── */
+    .user-admin-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .btn-danger {
+        padding: 5px 14px;
+        border-radius: 6px;
+        border: 2px solid #8a1a1a;
+        background: linear-gradient(to bottom, #e85b5b 0%, #c02e2e 50%, #a01a1a 100%);
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 0.8rem;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .btn-danger:hover {
+        background: linear-gradient(to bottom, #f57272 0%, #d03a3a 50%, #b02020 100%);
+    }
+
+    .btn-danger:active {
+        transform: translateY(2px);
+    }
+
+    .selected-count {
+        font-size: 0.78rem;
+        color: #a8d4f0;
+    }
+
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+        color: #d0eaff;
+    }
+
+    #tab-users .table-wrap {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        margin-bottom: 0;
+    }
+
+    .user-table th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #1a4060;
+        color: #a8d4f0;
+        text-align: left;
+        padding: 6px 10px;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+
+    .user-table th.sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .user-table th.sortable:hover {
+        color: #d0eaff;
+        background: #224f75;
+    }
+
+    .user-table th.sort-asc::after  { content: ' ▲'; font-size: 0.6rem; }
+    .user-table th.sort-desc::after { content: ' ▼'; font-size: 0.6rem; }
+
+    .user-table th:first-child {
+        width: 28px;
+        text-align: center;
+    }
+
+    .user-table td {
+        padding: 5px 10px;
+        border-bottom: 1px solid #1e4a70;
+        white-space: nowrap;
+    }
+
+    .user-table td:first-child {
+        text-align: center;
+    }
+
+    .user-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .user-table tr:hover td {
+        background: #234f75;
+    }
+
+    .user-table tr.disabled-row td {
+        color: #6a8aaa;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: bold;
+    }
+
+    .badge-admin { background: #c0860a; color: #fff; }
+    .badge-disabled { background: #7a2020; color: #ffaaaa; }
+    .badge-active { background: #1a6a30; color: #aaffbb; }
+    .badge-deletable { background: #7a2020; color: #ffaaaa; }
+    .badge-rarity-common     { background: #6b7280; color: #fff; }
+    .badge-rarity-uncommon   { background: #e5e7eb; color: #111; border: 1px solid #9ca3af; }
+    .badge-rarity-rare       { background: #16a34a; color: #fff; }
+    .badge-rarity-very-rare  { background: #2563eb; color: #fff; }
+    .badge-rarity-crazy-rare { background: #7c3aed; color: #fff; }
+    .badge-rarity-code-only  { background: #ea580c; color: #fff; }
+    .badge-rarity-prize-only { background: #111; color: #e5e7eb; }
+    .badge-rarity-auction-only { background: #eab308; color: #111; }
+    .badge-rarity-golden     { background: #7a5500; color: #ffd; }
+    .badge-rarity-holiday    { background: #3a6a30; color: #cfc; }
+
+    /* ── cToons tab ── */
+    #tab-ctoons.active {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    #tab-ctoons .ctoon-admin-form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    #tab-ctoons .table-wrap {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        margin-bottom: 0;
+    }
+
+    .ctoon-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+        color: #d0eaff;
+    }
+
+    .ctoon-table th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #1a4060;
+        color: #a8d4f0;
+        text-align: left;
+        padding: 6px 10px;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+
+    .ctoon-table th:first-child { width: 28px; text-align: center; }
+
+    .ctoon-table th.sortable { cursor: pointer; user-select: none; }
+    .ctoon-table th.sortable:hover { color: #d0eaff; background: #224f75; }
+    .ctoon-table th.sort-asc::after  { content: ' ▲'; font-size: 0.6rem; }
+    .ctoon-table th.sort-desc::after { content: ' ▼'; font-size: 0.6rem; }
+
+    .ctoon-table td {
+        padding: 5px 10px;
+        border-bottom: 1px solid #1e4a70;
+        white-space: nowrap;
+    }
+
+    .ctoon-table td:first-child { text-align: center; }
+    .ctoon-table tr:last-child td { border-bottom: none; }
+    .ctoon-table tbody tr:hover td { background: #234f75; cursor: pointer; }
+    .ctoon-table tr.deletable-row td { color: #9a6060; }
+
+    .ctoon-thumb {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        background: #0f2a40;
+        border-radius: 4px;
+        display: block;
+    }
+
+    .ctoon-thumb-empty {
+        width: 40px;
+        height: 40px;
+        background: #0f2a40;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3a6a8a;
+        font-size: 0.6rem;
+    }
+
+    .td-img { width: 50px; padding: 3px 6px !important; }
+    .badge-cmart-yes { background: #1a6a30; color: #aaffbb; }
+    .badge-cmart-no  { background: #334455; color: #99aabb; }
+
+    /* Edit drawer */
+    .ctoon-drawer {
+        position: absolute;
+        top: 0; right: 0;
+        width: 320px;
+        height: 100%;
+        background: #1a3a58;
+        border-left: 2px solid #1a5f8a;
+        border-radius: 0 8px 8px 0;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.2s ease;
+        z-index: 10;
+    }
+
+    .ctoon-drawer form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .ctoon-drawer.open { transform: translateX(0); }
+
+    .drawer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        background: #1a4060;
+        flex-shrink: 0;
+    }
+
+    .drawer-header span {
+        font-weight: bold;
+        font-size: 0.85rem;
+        color: #d0eaff;
+    }
+
+    .drawer-close {
+        background: none;
+        border: none;
+        color: #a8d4f0;
+        font-size: 1.1rem;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .drawer-close:hover { color: #fff; }
+
+    .drawer-body {
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .drawer-preview {
+        width: 100%;
+        height: 120px;
+        object-fit: contain;
+        background: #0f2a40;
+        border-radius: 6px;
+        margin-bottom: 4px;
+    }
+
+    .drawer-preview-placeholder {
+        width: 100%;
+        height: 120px;
+        background: #0f2a40;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4a7a9a;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .field-group label {
+        font-size: 0.68rem;
+        color: #a8d4f0;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .field-group input,
+    .field-group select,
+    .field-group textarea {
+        background: #0f2a40;
+        border: 1px solid #1a5f8a;
+        border-radius: 4px;
+        color: #d0eaff;
+        font-size: 0.8rem;
+        padding: 4px 7px;
+        width: 100%;
+    }
+
+    .field-group textarea { resize: vertical; min-height: 52px; }
+
+    .drawer-footer {
+        padding: 10px 12px;
+        background: #1a4060;
+        flex-shrink: 0;
+    }
+
+    .btn-save {
+        width: 100%;
+        padding: 6px;
+        border-radius: 6px;
+        border: 2px solid #1a5f8a;
+        background: linear-gradient(to bottom, #5bb8e8 0%, #2e8fc0 50%, #1a6fa0 100%);
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+
+    .btn-save:hover {
+        background: linear-gradient(to bottom, #72caf5 0%, #3aa0d0 50%, #2280b0 100%);
+    }
+
+    /* Make the ctoons panel relative so the drawer is positioned inside it */
+    #tab-ctoons { position: relative; }
+    .btn-success {
+        padding: 5px 14px;
+        border-radius: 6px;
+        border: 2px solid #1a6a30;
+        background: linear-gradient(to bottom, #4cbb6e 0%, #2a9a4a 50%, #1a7a30 100%);
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 0.8rem;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(to bottom, #60d080 0%, #35aa55 50%, #228840 100%);
+    }
+
+    .btn-success:active { transform: translateY(2px); }
+    .btn-danger:active  { transform: translateY(2px); }
+
+    .btn-purge {
+        padding: 5px 14px;
+        border-radius: 6px;
+        border: 2px solid #5a1a1a;
+        background: linear-gradient(to bottom, #aa2020 0%, #801010 100%);
+        color: #ffcccc;
+        font-weight: bold;
+        font-size: 0.8rem;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .btn-purge:hover { background: linear-gradient(to bottom, #cc2828 0%, #991818 100%); }
+    .btn-purge:active { transform: translateY(2px); }
+
+    /* ── cZone backgrounds grid ── */
+    #tab-czone.active {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    /* ── Globals tab ── */
+    #tab-globals.active {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .globals-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+
+    .globals-table th {
+        text-align: left;
+        padding: 5px 10px;
+        color: rgba(255,255,255,0.5);
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .globals-table td {
+        padding: 6px 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        vertical-align: middle;
+    }
+
+    .globals-num-input {
+        width: 100px;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 6px;
+        color: #ffffff;
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        outline: none;
+    }
+
+    .globals-num-input:focus {
+        border-color: rgba(255,255,255,0.4);
+    }
+
+    .globals-footer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0 4px;
+        flex-shrink: 0;
+    }
+
+    .globals-save-status {
+        font-size: 0.75rem;
+        color: #22c55e;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .globals-save-status.visible { opacity: 1; }
+
+    .czbg-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        padding: 4px 2px;
+        scrollbar-width: thin;
+        scrollbar-color: #1a5f8a transparent;
+    }
+
+    .czbg-card {
+        background: #1a3a58;
+        border: 2px solid #1a5f8a;
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    .czbg-card.selected  { border-color: #f47b00; box-shadow: 0 0 0 2px rgba(244,123,0,0.35); }
+    .czbg-card.is-default { border-color: #22c55e; }
+    .czbg-card.is-default.selected { border-color: #f47b00; }
+
+    .czbg-thumb {
+        width: 100%;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+        display: block;
+    }
+
+    .czbg-footer {
+        padding: 4px 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        background: #142e48;
+    }
+
+    .czbg-name {
+        font-size: 0.6rem;
+        color: #a8d4f0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .czbg-empty {
+        color: #a8d4f0;
+        font-size: 0.8rem;
+        font-style: italic;
+        padding: 8px 0;
+    }
+
+    /* ── Purge modal ── */
+    .purge-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 20;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0 8px 8px 8px;
+    }
+
+    .purge-overlay.open { display: flex; }
+
+    .purge-modal {
+        background: #1a3a58;
+        border: 2px solid #1a5f8a;
+        border-radius: 10px;
+        width: 480px;
+        max-height: 80%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .purge-modal-header {
+        background: #1a4060;
+        padding: 10px 16px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        color: #d0eaff;
+        flex-shrink: 0;
+    }
+
+    .purge-modal-body {
+        padding: 14px 16px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .purge-warning {
+        color: #ffaaaa;
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+
+    .purge-none-msg {
+        color: #a8d4f0;
+        font-size: 0.8rem;
+        text-align: center;
+        margin-top: 16px;
+    }
+
+    .purge-image-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .purge-image-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        width: 80px;
+    }
+
+    .purge-image-item img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        background: #0f2a40;
+        border-radius: 6px;
+        border: 1px solid #1a5f8a;
+    }
+
+    .purge-image-item span {
+        font-size: 0.62rem;
+        color: #a8d4f0;
+        text-align: center;
+        word-break: break-word;
+    }
+
+    .purge-modal-footer {
+        background: #1a4060;
+        padding: 12px 16px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .btn-purge-confirm {
+        padding: 5px 14px;
+        border-radius: 6px;
+        border: 2px solid #5a1a1a;
+        background: linear-gradient(to bottom, #aa2020 0%, #801010 100%);
+        color: #ffcccc;
+        font-weight: bold;
+        font-size: 0.75rem;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .btn-purge-confirm:hover { background: linear-gradient(to bottom, #cc2828 0%, #991818 100%); }
+
+    .btn-purge-cancel {
+        flex: 1;
+        padding: 8px;
+        border-radius: 6px;
+        border: 2px solid #1a6a30;
+        background: linear-gradient(to bottom, #4cbb6e 0%, #2a9a4a 50%, #1a7a30 100%);
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .btn-purge-cancel:hover { background: linear-gradient(to bottom, #60d080 0%, #35aa55 50%, #228840 100%); }
+
+    /* ── Upload modal ── */
+    .upload-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.75);
+        z-index: 20;
+        align-items: flex-start;
+        justify-content: center;
+        border-radius: 0 8px 8px 8px;
+        overflow-y: auto;
+        padding: 20px 0;
+    }
+
+    .upload-overlay.open { display: flex; }
+
+    .upload-modal {
+        background: #1a3a58;
+        border: 2px solid #1a5f8a;
+        border-radius: 10px;
+        width: 560px;
+        display: flex;
+        flex-direction: column;
+        max-height: none;
+    }
+
+    .upload-modal-header {
+        background: #1a4060;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 8px 8px 0 0;
+        flex-shrink: 0;
+    }
+
+    .upload-modal-header span {
+        font-weight: bold;
+        font-size: 0.9rem;
+        color: #d0eaff;
+    }
+
+    .upload-modal-body {
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .upload-card {
+        background: #0f2a40;
+        border: 1px solid #1a5f8a;
+        border-radius: 8px;
+        padding: 12px;
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 12px;
+    }
+
+    .upload-card-preview {
+        width: 110px;
+        height: 110px;
+        object-fit: contain;
+        border-radius: 6px;
+        background: #061822;
+        border: 1px solid #1a5f8a;
+    }
+
+    .upload-card-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .upload-card-fields .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .upload-card-fields label {
+        font-size: 0.65rem;
+        color: #a8d4f0;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .upload-card-fields input,
+    .upload-card-fields select,
+    .upload-card-fields textarea {
+        background: #1a3a58;
+        border: 1px solid #1a5f8a;
+        border-radius: 4px;
+        color: #d0eaff;
+        font-size: 0.78rem;
+        padding: 3px 7px;
+        width: 100%;
+    }
+
+    .upload-card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .upload-modal-footer {
+        background: #1a4060;
+        padding: 12px 16px;
+        display: flex;
+        gap: 10px;
+        border-radius: 0 0 8px 8px;
+        flex-shrink: 0;
+    }
+
+    .btn-upload-submit {
+        flex: 1;
+        padding: 7px;
+        border-radius: 6px;
+        border: 2px solid #1a5f8a;
+        background: linear-gradient(to bottom, #5bb8e8 0%, #2e8fc0 50%, #1a6fa0 100%);
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .btn-upload-submit:hover {
+        background: linear-gradient(to bottom, #72caf5 0%, #3aa0d0 50%, #2280b0 100%);
+    }
+
+    .btn-upload-cancel {
+        padding: 7px 20px;
+        border-radius: 6px;
+        border: 2px solid #5a1a1a;
+        background: linear-gradient(to bottom, #aa2020 0%, #801010 100%);
+        color: #ffcccc;
+        font-weight: bold;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .btn-upload-cancel:hover {
+        background: linear-gradient(to bottom, #cc2828 0%, #991818 100%);
+    }
+</style>
+
+<div class="admin-page">
+    <div class="admin-tabs">
+        <div class="admin-tab active" data-tab="analytics">Analytics</div>
+        <div class="admin-tab" data-tab="users">Users Admin</div>
+        <div class="admin-tab" data-tab="ctoons">cToons</div>
+        <div class="admin-tab" data-tab="czone">cZone</div>
+        <div class="admin-tab" data-tab="globals">Globals</div>
+    </div>
+
+    <div class="admin-panel">
+
+        <!-- Analytics Tab -->
+        <div class="tab-content active" id="tab-analytics">
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.total_users }}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.active_today }}</div>
+                    <div class="stat-label">Active Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.new_this_week }}</div>
+                    <div class="stat-label">New This Week</div>
+                </div>
+            </div>
+
+            <div class="analytics-section-title">Recent Registrations</div>
+            <div class="analytics-table-wrap">
+                <table class="analytics-table" id="analytics-reg-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-col="0">Username</th>
+                            <th class="sortable" data-col="1">Discord</th>
+                            <th class="sortable" data-col="2">Joined</th>
+                            <th class="sortable" data-col="3">Last Login</th>
+                            <th class="sortable" data-col="4">Last IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in stats.recent_users %}
+                        <tr>
+                            <td>{{ user.username or '—' }}</td>
+                            <td>{{ user.discord_username }}</td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ user.last_login.strftime('%Y-%m-%d') if user.last_login else '—' }}</td>
+                            <td>{{ user.last_ip or '—' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" style="text-align:center; color:#a8d4f0;">No users yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- User Administration Tab -->
+        <div class="tab-content" id="tab-users">
+            <!-- Disable / Enable toolbar (multi-select) -->
+            <form method="POST" id="user-admin-form" class="user-admin-form">
+                <input type="hidden" name="active_tab" value="users">
+                <div class="user-admin-toolbar">
+                    <button type="submit" class="btn-danger"  id="disable-btn" disabled
+                            formaction="/admin/disable-users">Disable User</button>
+                    <button type="submit" class="btn-success" id="enable-btn"  disabled
+                            formaction="/admin/enable-users">Enable Account</button>
+                    <span class="selected-count" id="selected-count">0 selected</span>
+                </div>
+                <div class="table-wrap">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all" title="Select all"></th>
+                                <th class="sortable" data-col="1">Username</th>
+                                <th class="sortable" data-col="2">Discord Name</th>
+                                <th class="sortable" data-col="3">Joined</th>
+                                <th class="sortable" data-col="4">Last Login</th>
+                                <th class="sortable" data-col="5">Last IP</th>
+                                <th class="sortable" data-col="6">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in stats.all_users %}
+                            <tr class="{{ 'disabled-row' if not u.is_active else '' }}">
+                                <td>
+                                    {% if u.id != current_user.id %}
+                                    <input type="checkbox" name="user_ids" value="{{ u.id }}" class="user-check">
+                                    {% endif %}
+                                </td>
+                                <td>{{ u.username or '—' }}</td>
+                                <td>{{ u.discord_username }}</td>
+                                <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ u.last_login.strftime('%Y-%m-%d %H:%M') if u.last_login else '—' }}</td>
+                                <td>{{ u.last_ip or '—' }}</td>
+                                <td>
+                                    {% if u.is_admin %}<span class="badge badge-admin">Admin</span>{% endif %}
+                                    {% if u.is_active %}
+                                        <span class="badge badge-active">Active</span>
+                                    {% else %}
+                                        <span class="badge badge-disabled">Disabled</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="7" style="text-align:center; color:#a8d4f0;">No users yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+
+        <!-- cToons Tab -->
+        <div class="tab-content" id="tab-ctoons">
+            <form method="POST" class="ctoon-admin-form" id="ctoon-admin-form">
+                <input type="hidden" name="active_tab" value="ctoons">
+                <div class="user-admin-toolbar">
+                    <button type="button" class="btn-success" id="ctoon-upload-btn">Upload cToon</button>
+                    <button type="submit" class="btn-danger" id="ctoon-delete-btn" disabled
+                            formaction="/admin/ctoon/mark-deletable">Mark for Deletion</button>
+                    <button type="button" class="btn-purge" id="ctoon-purge-btn">Delete cToons</button>
+                    <span class="selected-count" id="ctoon-selected-count">0 selected</span>
+                </div>
+                <div class="table-wrap" id="ctoon-table-wrap">
+                    <table class="ctoon-table" id="ctoon-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="ctoon-select-all" title="Select all"></th>
+                                <th style="width:50px;">Image</th>
+                                <th class="sortable" data-col="2">Name</th>
+                                <th class="sortable" data-col="3">Release Date</th>
+                                <th class="sortable" data-col="4" data-sort="rarity">Rarity</th>
+                                <th class="sortable" data-col="5">Minted</th>
+                                <th class="sortable" data-col="6">Mint Count</th>
+                                <th class="sortable" data-col="7">In cMart</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in stats.all_ctoons %}
+                            <tr class="{{ 'deletable-row' if c.deletable else '' }}"
+                                data-ctoon="{{ c.id }}"
+                                data-name="{{ c.name }}"
+                                data-set="{{ c.ctoon_set or '' }}"
+                                data-series="{{ c.series or '' }}"
+                                data-rarity="{{ c.rarity }}"
+                                data-edition="{{ c.edition }}"
+                                data-mint="{{ c.mint_count }}"
+                                data-cmart="{{ c.cmart_value }}"
+                                data-release="{{ c.release_date.strftime('%Y-%m-%dT%H:%M') if c.release_date else '' }}"
+                                data-in-cmart="{{ 'true' if c.in_cmart else 'false' }}"
+                                data-description="{{ c.description or '' }}"
+                                data-image="{{ c.image_url }}">
+                                <td><input type="checkbox" name="ctoon_ids" value="{{ c.id }}" class="ctoon-check"></td>
+                                <td class="td-img">
+                                    {% if c.image_url %}
+                                    <img src="{{ c.image_url }}" alt="{{ c.name }}" class="ctoon-thumb">
+                                    {% else %}
+                                    <div class="ctoon-thumb-empty">—</div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ c.name }}</td>
+                                <td>{{ c.release_date.strftime('%Y-%m-%d %H:%M') if c.release_date else '—' }}</td>
+                                <td><span class="badge badge-rarity-{{ c.rarity | replace(' ', '-') }}">{{ c.rarity }}</span></td>
+                                <td>{{ c.minted }}</td>
+                                <td>{% if c.mint_count == -1 %}&#8734;{% else %}{{ c.mint_count }}{% endif %}</td>
+                                <td>
+                                    {% if c.in_cmart %}
+                                    <span class="badge badge-cmart-yes">Yes</span>
+                                    {% else %}
+                                    <span class="badge badge-cmart-no">No</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="8" style="text-align:center; color:#a8d4f0;">No cToons yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+
+            <!-- Edit Drawer -->
+            <div class="ctoon-drawer" id="ctoon-drawer">
+                <div class="drawer-header">
+                    <span>Edit cToon</span>
+                    <button type="button" class="drawer-close" id="drawer-close">✕</button>
+                </div>
+                <form method="POST" id="ctoon-edit-form">
+                    <input type="hidden" name="active_tab" value="ctoons">
+                    <div class="drawer-body">
+                        <div id="drawer-img-wrap">
+                            <div class="drawer-preview-placeholder" id="drawer-placeholder">No image</div>
+                        </div>
+                        <div class="field-group" style="flex-direction:row;align-items:center;gap:8px;">
+                            <input type="checkbox" name="in_cmart" id="d-in-cmart" style="width:auto;">
+                            <label for="d-in-cmart" style="text-transform:none;letter-spacing:0;font-size:0.8rem;color:#d0eaff;cursor:pointer;">In cMart</label>
+                        </div>
+                        <div class="field-group">
+                            <label>Name</label>
+                            <input type="text" name="name" id="d-name">
+                        </div>
+                        <div class="field-group">
+                            <label>Set</label>
+                            <input type="text" name="ctoon_set" id="d-set" list="ctoon-sets-list" autocomplete="off">
+                        </div>
+                        <div class="field-group">
+                            <label>Series</label>
+                            <input type="text" name="series" id="d-series" list="ctoon-series-list" autocomplete="off">
+                        </div>
+                        <div class="field-group">
+                            <label>Rarity</label>
+                            <select name="rarity" id="d-rarity">
+                                <option value="common">Common</option>
+                                <option value="uncommon">Uncommon</option>
+                                <option value="rare">Rare</option>
+                                <option value="very rare">Very Rare</option>
+                                <option value="crazy rare">Crazy Rare</option>
+                                <option value="code only">Code Only</option>
+                                <option value="prize only">Prize Only</option>
+                                <option value="auction only">Auction Only</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Edition</label>
+                            <input type="number" name="edition" id="d-edition" min="1">
+                        </div>
+                        <div class="field-group">
+                            <label>Mint Count</label>
+                            <input type="number" name="mint_count" id="d-mint" min="-1">
+                        </div>
+                        <div class="field-group">
+                            <label>cMart Value</label>
+                            <input type="number" name="cmart_value" id="d-cmart" min="0">
+                        </div>
+                        <div class="field-group">
+                            <label>Release Date &amp; Time</label>
+                            <input type="datetime-local" name="release_date" id="d-release">
+                        </div>
+                        <div class="field-group">
+                            <label>Image URL</label>
+                            <input type="text" name="image_url" id="d-image">
+                        </div>
+                        <div class="field-group">
+                            <label>Description</label>
+                            <textarea name="description" id="d-description"></textarea>
+                        </div>
+                    </div>
+                    <div class="drawer-footer">
+                        <button type="submit" class="btn-save">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Autocomplete datalists -->
+            <datalist id="ctoon-sets-list">
+                {% for s in stats.ctoon_sets %}
+                <option value="{{ s }}">
+                {% endfor %}
+            </datalist>
+            <datalist id="ctoon-series-list">
+                {% for s in stats.ctoon_series %}
+                <option value="{{ s }}">
+                {% endfor %}
+            </datalist>
+
+            <!-- Hidden file input -->
+            <input type="file" id="ctoon-file-input" multiple accept=".png,.jpg,.jpeg,.gif" style="display:none">
+
+            <!-- Upload Modal -->
+            <div class="upload-overlay" id="upload-overlay">
+                <div class="upload-modal">
+                    <div class="upload-modal-header">
+                        <span>Upload cToons</span>
+                        <button type="button" class="drawer-close" id="upload-close-btn">✕</button>
+                    </div>
+                    <form method="POST" action="/admin/ctoon/upload" enctype="multipart/form-data" id="upload-form">
+                        <input type="hidden" name="active_tab" value="ctoons">
+                        <div class="upload-modal-body" id="upload-cards"></div>
+                        <div class="upload-modal-footer">
+                            <button type="submit" class="btn-upload-submit">Upload All</button>
+                            <button type="button" class="btn-upload-cancel" id="upload-cancel-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div class="purge-overlay" id="purge-overlay">
+                <div class="purge-modal">
+                    <div class="purge-modal-header">
+                        <span>Confirm Deletion</span>
+                    </div>
+                    <div class="purge-modal-body">
+                        <p class="purge-warning">The following cToons will be permanently deleted:</p>
+                        <div class="purge-image-grid" id="purge-image-grid"></div>
+                        <p class="purge-none-msg" id="purge-none-msg" style="display:none;">No cToons are currently marked for deletion.</p>
+                    </div>
+                    <div class="purge-modal-footer">
+                        <form method="POST" action="/admin/ctoon/delete-marked" id="purge-form">
+                            <input type="hidden" name="active_tab" value="ctoons">
+                            <button type="submit" class="btn-purge-confirm" id="purge-confirm-btn">Delete</button>
+                        </form>
+                        <button type="button" class="btn-purge-cancel" id="purge-cancel-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- cZone Tab -->
+        <div class="tab-content" id="tab-czone">
+            <div class="user-admin-toolbar">
+                <button type="button" class="btn-success" id="czbg-upload-btn">Upload Background</button>
+                <button type="button" class="btn-success" id="czbg-set-default-btn" style="display:none">Set as Default</button>
+            </div>
+
+            {% if stats.czone_backgrounds %}
+            <div class="czbg-grid">
+                {% for bg in stats.czone_backgrounds %}
+                <div class="czbg-card{% if bg == stats.czone_default_bg %} is-default{% endif %}"
+                     data-filename="{{ bg }}">
+                    <img class="czbg-thumb" src="/czone-bg/{{ bg }}" alt="{{ bg }}">
+                    <div class="czbg-footer">
+                        <span class="czbg-name" title="{{ bg }}">{{ bg }}</span>
+                        <form method="POST" action="/admin/czone-bg/delete">
+                            <input type="hidden" name="active_tab" value="czone">
+                            <input type="hidden" name="filename" value="{{ bg }}">
+                            <button type="submit" class="btn-danger"
+                                    style="padding:2px 8px; font-size:0.7rem;">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="czbg-empty">No backgrounds uploaded yet.</p>
+            {% endif %}
+
+            <!-- Hidden file input -->
+            <input type="file" id="czbg-file-input" multiple accept=".png,.jpg,.jpeg,.gif" style="display:none">
+
+            <!-- Upload Modal -->
+            <div class="upload-overlay" id="czbg-upload-overlay">
+                <div class="upload-modal">
+                    <div class="upload-modal-header">
+                        <span>Upload cZone Backgrounds</span>
+                        <button type="button" class="drawer-close" id="czbg-close-btn">✕</button>
+                    </div>
+                    <form method="POST" action="/admin/czone-bg/upload" enctype="multipart/form-data" id="czbg-upload-form">
+                        <input type="hidden" name="active_tab" value="czone">
+                        <div class="upload-modal-body" id="czbg-preview-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;"></div>
+                        <div class="upload-modal-footer">
+                            <button type="submit" class="btn-upload-submit">Upload All</button>
+                            <button type="button" class="btn-upload-cancel" id="czbg-cancel-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Globals Tab -->
+        <div class="tab-content" id="tab-globals">
+            <table class="globals-table">
+                <thead>
+                    <tr>
+                        <th style="width:140px">Rarity</th>
+                        <th>Default Mint Count <span style="font-weight:normal;opacity:0.6">(-1 = unlimited)</span></th>
+                        <th>Default cMart Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set rarity_list = [
+                        ('common',       'Common',       'common'),
+                        ('uncommon',     'Uncommon',     'uncommon'),
+                        ('rare',         'Rare',         'rare'),
+                        ('very rare',    'Very Rare',    'very-rare'),
+                        ('crazy rare',   'Crazy Rare',   'crazy-rare'),
+                        ('prize only',   'Prize Only',   'prize-only'),
+                        ('code only',    'Code Only',    'code-only'),
+                        ('auction only', 'Auction Only', 'auction-only'),
+                    ] %}
+                    {% for key, label, badge_slug in rarity_list %}
+                    <tr>
+                        <td>
+                            <span class="badge badge-rarity-{{ badge_slug }}">{{ label }}</span>
+                        </td>
+                        <td>
+                            <input class="globals-num-input"
+                                   type="number" min="0"
+                                   data-rarity="{{ key }}" data-field="mint_count" min="-1"
+                                   value="{{ globals.get(key, {}).get('mint_count', 0) }}">
+                        </td>
+                        <td>
+                            <input class="globals-num-input"
+                                   type="number" min="0"
+                                   data-rarity="{{ key }}" data-field="cmart_value"
+                                   value="{{ globals.get(key, {}).get('cmart_value', 0) }}">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="globals-footer">
+                <button type="button" class="btn-success" id="globals-save-btn">Save Defaults</button>
+                <span class="globals-save-status" id="globals-save-status">Saved!</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    (function () {
+        const tabs = document.querySelectorAll('.admin-tab');
+
+        function activateTab(name) {
+            tabs.forEach(function (t) { t.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function (p) { p.classList.remove('active'); });
+            const target = document.querySelector('[data-tab="' + name + '"]');
+            const panel  = document.getElementById('tab-' + name);
+            if (target) target.classList.add('active');
+            if (panel)  panel.classList.add('active');
+        }
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                activateTab(tab.dataset.tab);
+                const url = new URL(window.location);
+                url.searchParams.set('tab', tab.dataset.tab);
+                history.replaceState(null, '', url);
+            });
+        });
+
+        const initialTab = new URLSearchParams(window.location.search).get('tab');
+        if (initialTab) activateTab(initialTab);
+    })();
+
+    (function () {
+        const selectAll = document.getElementById('select-all');
+        const disableBtn = document.getElementById('disable-btn');
+        const enableBtn  = document.getElementById('enable-btn');
+        const countLabel = document.getElementById('selected-count');
+
+        function updateToolbar() {
+            const checked = document.querySelectorAll('.user-check:checked');
+            const n = checked.length;
+            countLabel.textContent = n + ' selected';
+            disableBtn.disabled = n === 0;
+            enableBtn.disabled  = n === 0;
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                document.querySelectorAll('.user-check').forEach(function (cb) {
+                    cb.checked = selectAll.checked;
+                });
+                updateToolbar();
+            });
+        }
+
+        document.querySelectorAll('.user-check').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                const all = document.querySelectorAll('.user-check');
+                const checked = document.querySelectorAll('.user-check:checked');
+                if (selectAll) selectAll.checked = all.length === checked.length;
+                updateToolbar();
+            });
+        });
+    })();
+
+    (function () {
+        const RARITY_ORDER = {
+            'common': 0, 'uncommon': 1, 'rare': 2, 'very rare': 3,
+            'crazy rare': 4, 'prize only': 5, 'code only': 6, 'auction only': 7
+        };
+
+        function makeTableSortable(table, storageKey) {
+            const tbody = table.querySelector('tbody');
+            let sortCol = -1;
+            let sortAsc = true;
+
+            function applySort(col, asc) {
+                sortCol = col;
+                sortAsc = asc;
+                const sortType = (table.querySelector('th[data-col="' + col + '"]') || {}).dataset?.sort || '';
+                table.querySelectorAll('th.sortable').forEach(function (h) {
+                    h.classList.remove('sort-asc', 'sort-desc');
+                });
+                const activeTh = table.querySelector('th[data-col="' + col + '"]');
+                if (activeTh) activeTh.classList.add(asc ? 'sort-asc' : 'sort-desc');
+
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort(function (a, b) {
+                    const aText = (a.cells[col] ? a.cells[col].textContent : '').trim().toLowerCase();
+                    const bText = (b.cells[col] ? b.cells[col].textContent : '').trim().toLowerCase();
+                    let cmp;
+                    if (sortType === 'rarity') {
+                        const aRank = RARITY_ORDER[aText] ?? 99;
+                        const bRank = RARITY_ORDER[bText] ?? 99;
+                        cmp = aRank - bRank;
+                    } else {
+                        const aNum = Number(aText);
+                        const bNum = Number(bText);
+                        const bothNumeric = !isNaN(aNum) && !isNaN(bNum) && aText !== '' && bText !== '';
+                        if (bothNumeric) {
+                            cmp = aNum - bNum;
+                        } else {
+                            cmp = aText < bText ? -1 : aText > bText ? 1 : 0;
+                        }
+                    }
+                    return asc ? cmp : -cmp;
+                });
+                rows.forEach(function (r) { tbody.appendChild(r); });
+
+                if (storageKey) {
+                    sessionStorage.setItem(storageKey, JSON.stringify({ col: col, asc: asc }));
+                }
+            }
+
+            table.querySelectorAll('th.sortable').forEach(function (th) {
+                th.addEventListener('click', function () {
+                    const col = parseInt(th.dataset.col);
+                    applySort(col, sortCol === col ? !sortAsc : true);
+                });
+            });
+
+            if (storageKey) {
+                const saved = sessionStorage.getItem(storageKey);
+                if (saved) {
+                    try {
+                        const s = JSON.parse(saved);
+                        applySort(s.col, s.asc);
+                    } catch (e) {}
+                }
+            }
+        }
+
+        makeTableSortable(document.querySelector('.user-table'));
+        makeTableSortable(document.getElementById('analytics-reg-table'));
+        makeTableSortable(document.getElementById('ctoon-table'), 'ctoon-table-sort');
+
+        // Save/restore ctoon table scroll position
+        const ctoonWrap = document.getElementById('ctoon-table-wrap');
+        if (ctoonWrap) {
+            const savedScroll = sessionStorage.getItem('ctoon-table-scroll');
+            if (savedScroll) ctoonWrap.scrollTop = parseInt(savedScroll);
+            ctoonWrap.addEventListener('scroll', function () {
+                sessionStorage.setItem('ctoon-table-scroll', ctoonWrap.scrollTop);
+            });
+        }
+    })();
+
+    /* ── cToon purge modal ── */
+    (function () {
+        const overlay     = document.getElementById('purge-overlay');
+        const grid        = document.getElementById('purge-image-grid');
+        const noneMsg     = document.getElementById('purge-none-msg');
+        const confirmBtn  = document.getElementById('purge-confirm-btn');
+        const cancelBtn   = document.getElementById('purge-cancel-btn');
+        const purgeBtn    = document.getElementById('ctoon-purge-btn');
+
+        purgeBtn.addEventListener('click', function () {
+            grid.innerHTML = '';
+            const rows = document.querySelectorAll('.ctoon-table tbody tr.deletable-row[data-ctoon]');
+
+            if (rows.length === 0) {
+                noneMsg.style.display = '';
+                confirmBtn.disabled = true;
+            } else {
+                noneMsg.style.display = 'none';
+                confirmBtn.disabled = false;
+                rows.forEach(function (row) {
+                    const item = document.createElement('div');
+                    item.className = 'purge-image-item';
+
+                    if (row.dataset.image) {
+                        const img = document.createElement('img');
+                        img.src = row.dataset.image;
+                        img.alt = row.dataset.name;
+                        item.appendChild(img);
+                    } else {
+                        const ph = document.createElement('div');
+                        ph.style.cssText = 'width:80px;height:80px;background:#0f2a40;border-radius:6px;border:1px solid #1a5f8a;display:flex;align-items:center;justify-content:center;color:#4a7a9a;font-size:0.65rem;';
+                        ph.textContent = 'No image';
+                        item.appendChild(ph);
+                    }
+
+                    const label = document.createElement('span');
+                    label.textContent = row.dataset.name;
+                    item.appendChild(label);
+                    grid.appendChild(item);
+                });
+            }
+
+            overlay.classList.add('open');
+        });
+
+        cancelBtn.addEventListener('click', function () {
+            overlay.classList.remove('open');
+        });
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) overlay.classList.remove('open');
+        });
+    })();
+
+    /* ── cToons checkbox toolbar ── */
+    (function () {
+        const selectAll  = document.getElementById('ctoon-select-all');
+        const deleteBtn  = document.getElementById('ctoon-delete-btn');
+        const countLabel = document.getElementById('ctoon-selected-count');
+
+        function update() {
+            const checked = Array.from(document.querySelectorAll('.ctoon-check:checked'));
+            const n = checked.length;
+            countLabel.textContent = n + ' selected';
+            deleteBtn.disabled = n === 0;
+
+            const allMarked = n > 0 && checked.every(function (cb) {
+                return cb.closest('tr').classList.contains('deletable-row');
+            });
+
+            if (allMarked) {
+                deleteBtn.textContent = 'Unmark for Deletion';
+                deleteBtn.setAttribute('formaction', '/admin/ctoon/unmark-deletable');
+                deleteBtn.classList.remove('btn-danger');
+                deleteBtn.classList.add('btn-success');
+            } else {
+                deleteBtn.textContent = 'Mark for Deletion';
+                deleteBtn.setAttribute('formaction', '/admin/ctoon/mark-deletable');
+                deleteBtn.classList.remove('btn-success');
+                deleteBtn.classList.add('btn-danger');
+            }
+        }
+
+        selectAll.addEventListener('change', function () {
+            document.querySelectorAll('.ctoon-check').forEach(function (cb) {
+                cb.checked = selectAll.checked;
+            });
+            update();
+        });
+
+        document.querySelectorAll('.ctoon-check').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                const all     = document.querySelectorAll('.ctoon-check').length;
+                const checked = document.querySelectorAll('.ctoon-check:checked').length;
+                selectAll.checked = all === checked;
+                update();
+            });
+        });
+    })();
+
+    /* ── cToon edit drawer ── */
+    (function () {
+        const drawer    = document.getElementById('ctoon-drawer');
+        const closeBtn  = document.getElementById('drawer-close');
+        const editForm  = document.getElementById('ctoon-edit-form');
+        const imgWrap   = document.getElementById('drawer-img-wrap');
+        const placeholder = document.getElementById('drawer-placeholder');
+
+        function openDrawer(row) {
+            const d = row.dataset;
+            editForm.action = '/admin/ctoon/' + d.ctoon + '/edit';
+
+            document.getElementById('d-name').value        = d.name;
+            document.getElementById('d-set').value         = d.set;
+            document.getElementById('d-series').value      = d.series;
+            document.getElementById('d-rarity').value      = d.rarity;
+            document.getElementById('d-edition').value     = d.edition;
+            document.getElementById('d-mint').value        = d.mint;
+            document.getElementById('d-cmart').value       = d.cmart;
+            document.getElementById('d-release').value     = d.release;
+            document.getElementById('d-in-cmart').checked  = d.inCmart === 'true';
+            document.getElementById('d-image').value       = d.image;
+            document.getElementById('d-description').value = d.description;
+
+            const existing = imgWrap.querySelector('img');
+            if (existing) existing.remove();
+            if (placeholder) placeholder.remove();
+
+            if (d.image) {
+                const img = document.createElement('img');
+                img.src = d.image;
+                img.className = 'drawer-preview';
+                img.alt = d.name;
+                imgWrap.prepend(img);
+            } else {
+                const ph = document.createElement('div');
+                ph.className = 'drawer-preview-placeholder';
+                ph.id = 'drawer-placeholder';
+                ph.textContent = 'No image';
+                imgWrap.prepend(ph);
+            }
+
+            drawer.classList.add('open');
+        }
+
+        closeBtn.addEventListener('click', function () {
+            drawer.classList.remove('open');
+        });
+
+        document.querySelectorAll('.ctoon-table tbody tr[data-ctoon]').forEach(function (row) {
+            row.addEventListener('click', function (e) {
+                if (e.target.type === 'checkbox') return;
+                openDrawer(row);
+            });
+        });
+    })();
+
+    /* ── Globals tab ── */
+    (function () {
+        const RARITY_GLOBALS = {{ globals | tojson }};
+
+        const saveBtn    = document.getElementById('globals-save-btn');
+        const saveStatus = document.getElementById('globals-save-status');
+        if (!saveBtn) return;
+
+        saveBtn.addEventListener('click', function () {
+            const payload = {};
+            document.querySelectorAll('.globals-num-input').forEach(function (input) {
+                const rarity = input.dataset.rarity;
+                const field  = input.dataset.field;
+                if (!payload[rarity]) payload[rarity] = {};
+                payload[rarity][field] = parseInt(input.value) || 0;
+            });
+            fetch('/admin/globals/save', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(payload),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) return;
+                // Update our in-memory copy so upload cards reflect changes immediately
+                Object.assign(RARITY_GLOBALS, payload);
+                saveStatus.classList.add('visible');
+                setTimeout(function () { saveStatus.classList.remove('visible'); }, 2000);
+            });
+        });
+
+        // Expose for the upload modal to access
+        window.RARITY_GLOBALS = RARITY_GLOBALS;
+    })();
+
+    /* ── cToon upload modal ── */
+    (function () {
+        const RARITIES = [
+            ['common',       'Common'],
+            ['uncommon',     'Uncommon'],
+            ['rare',         'Rare'],
+            ['very rare',    'Very Rare'],
+            ['crazy rare',   'Crazy Rare'],
+            ['code only',    'Code Only'],
+            ['prize only',   'Prize Only'],
+            ['auction only', 'Auction Only'],
+        ];
+
+        const fileInput     = document.getElementById('ctoon-file-input');
+        const uploadBtn     = document.getElementById('ctoon-upload-btn');
+        const uploadOverlay = document.getElementById('upload-overlay');
+        const uploadCards   = document.getElementById('upload-cards');
+        const uploadForm    = document.getElementById('upload-form');
+        const closeBtn      = document.getElementById('upload-close-btn');
+        const cancelBtn     = document.getElementById('upload-cancel-btn');
+
+        uploadBtn.addEventListener('click', function () {
+            fileInput.value = '';
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function () {
+            const files = Array.from(fileInput.files);
+            if (!files.length) return;
+
+            uploadCards.innerHTML = '';
+
+            // Move files into the form's own file input
+            const dt = new DataTransfer();
+            files.forEach(function (f) { dt.items.add(f); });
+            let formFileInput = uploadForm.querySelector('input[type="file"][name="images"]');
+            if (!formFileInput) {
+                formFileInput = document.createElement('input');
+                formFileInput.type = 'file';
+                formFileInput.name = 'images';
+                formFileInput.multiple = true;
+                formFileInput.style.display = 'none';
+                uploadForm.appendChild(formFileInput);
+            }
+            formFileInput.files = dt.files;
+
+            const rarityOptions = RARITIES.map(function (r) {
+                return '<option value="' + r[0] + '">' + r[1] + '</option>';
+            }).join('');
+
+            let pending = files.length;
+            files.forEach(function (file) {
+                const baseName = file.name
+                    .replace(/\.[^/.]+$/, '')          // strip extension
+                    .replace(/_?fm[12]_?/gi, ' ')      // remove fm1 / fm2
+                    .replace(/_?pic_?/gi, ' ')         // remove pic
+                    .replace(/_/g, ' ')                // underscores → spaces
+                    .replace(/\s+/g, ' ')              // collapse whitespace
+                    .trim()
+                    .replace(/\b\w/g, function (c) { return c.toUpperCase(); }); // title case
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const card = document.createElement('div');
+                    card.className = 'upload-card';
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'upload-card-preview';
+                    img.alt = baseName;
+                    card.appendChild(img);
+
+                    const fields = document.createElement('div');
+                    fields.className = 'upload-card-fields';
+                    fields.innerHTML =
+                        '<div class="field-group"><label>Name</label>' +
+                        '<input type="text" name="name" value="' + baseName.replace(/"/g, '&quot;') + '"></div>' +
+                        '<div class="upload-card-grid">' +
+                        '<div class="field-group"><label>Set</label><input type="text" name="ctoon_set" list="ctoon-sets-list" autocomplete="off"></div>' +
+                        '<div class="field-group"><label>Series</label><input type="text" name="series" list="ctoon-series-list" autocomplete="off"></div>' +
+                        '<div class="field-group"><label>Rarity</label><select name="rarity">' + rarityOptions + '</select></div>' +
+                        '<div class="field-group"><label>Edition</label><input type="number" name="edition" value="1" min="1"></div>' +
+                        '<div class="field-group"><label>Mint Count</label><input type="number" name="mint_count" value="0" min="-1"></div>' +
+                        '<div class="field-group"><label>cMart Value</label><input type="number" name="cmart_value" value="0" min="0"></div>' +
+                        '<div class="field-group"><label>Release Date &amp; Time</label><input type="datetime-local" name="release_date" value="' + new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,16) + '"></div>' +
+                        '</div>' +
+                        '<div class="field-group"><label>Description</label><textarea name="description" rows="2"></textarea></div>';
+                    card.appendChild(fields);
+
+                    // Auto-fill mint count and cMart value when rarity changes
+                    const raritySelect = fields.querySelector('select[name="rarity"]');
+                    const mintInput    = fields.querySelector('input[name="mint_count"]');
+                    const priceInput   = fields.querySelector('input[name="cmart_value"]');
+                    function applyRarityDefaults() {
+                        const entry = (window.RARITY_GLOBALS || {})[raritySelect.value] || {};
+                        if (mintInput  && entry.mint_count  !== undefined) mintInput.value  = entry.mint_count;
+                        if (priceInput && entry.cmart_value !== undefined) priceInput.value = entry.cmart_value;
+                    }
+                    raritySelect.addEventListener('change', applyRarityDefaults);
+                    applyRarityDefaults(); // apply on creation for default rarity
+
+                    uploadCards.appendChild(card);
+
+                    pending--;
+                    if (pending === 0) uploadOverlay.classList.add('open');
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function closeUpload() {
+            uploadOverlay.classList.remove('open');
+            uploadCards.innerHTML = '';
+        }
+
+        closeBtn.addEventListener('click', closeUpload);
+        cancelBtn.addEventListener('click', closeUpload);
+        uploadOverlay.addEventListener('click', function (e) {
+            if (e.target === uploadOverlay) closeUpload();
+        });
+    })();
+
+    /* ── cZone background upload modal ── */
+    (function () {
+        const fileInput    = document.getElementById('czbg-file-input');
+        const uploadBtn    = document.getElementById('czbg-upload-btn');
+        const overlay      = document.getElementById('czbg-upload-overlay');
+        const previewGrid  = document.getElementById('czbg-preview-grid');
+        const uploadForm   = document.getElementById('czbg-upload-form');
+        const closeBtn     = document.getElementById('czbg-close-btn');
+        const cancelBtn    = document.getElementById('czbg-cancel-btn');
+
+        uploadBtn.addEventListener('click', function () {
+            fileInput.value = '';
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function () {
+            const files = Array.from(fileInput.files);
+            if (!files.length) return;
+
+            previewGrid.innerHTML = '';
+
+            // Transfer files to a hidden input in the form
+            const dt = new DataTransfer();
+            files.forEach(function (f) { dt.items.add(f); });
+            let formFileInput = uploadForm.querySelector('input[type="file"][name="backgrounds"]');
+            if (!formFileInput) {
+                formFileInput = document.createElement('input');
+                formFileInput.type = 'file';
+                formFileInput.name = 'backgrounds';
+                formFileInput.multiple = true;
+                formFileInput.style.display = 'none';
+                uploadForm.appendChild(formFileInput);
+            }
+            formFileInput.files = dt.files;
+
+            let pending = files.length;
+            files.forEach(function (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background:var(--OrbitDarkBlue,#1a3a5c);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;';
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = file.name;
+                    img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:contain;padding:4px;';
+                    card.appendChild(img);
+
+                    const label = document.createElement('div');
+                    label.textContent = file.name;
+                    label.style.cssText = 'font-size:0.65rem;color:rgba(255,255,255,0.7);padding:3px 5px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                    card.appendChild(label);
+
+                    previewGrid.appendChild(card);
+
+                    pending--;
+                    if (pending === 0) overlay.classList.add('open');
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function closeModal() {
+            overlay.classList.remove('open');
+            previewGrid.innerHTML = '';
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) closeModal();
+        });
+    })();
+
+    /* ── cZone background selection + set-default ── */
+    (function () {
+        var setDefaultBtn = document.getElementById('czbg-set-default-btn');
+        var selectedCard  = null;
+
+        document.querySelectorAll('.czbg-card').forEach(function (card) {
+            card.addEventListener('click', function (e) {
+                if (e.target.closest('form')) return; // ignore delete button clicks
+                document.querySelectorAll('.czbg-card').forEach(function (c) {
+                    c.classList.remove('selected');
+                });
+                card.classList.add('selected');
+                selectedCard = card;
+                if (setDefaultBtn) setDefaultBtn.style.display = '';
+            });
+        });
+
+        if (setDefaultBtn) {
+            setDefaultBtn.addEventListener('click', function () {
+                if (!selectedCard) return;
+                var filename = selectedCard.dataset.filename;
+                fetch('/admin/czone-bg/set-default', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ filename: filename }),
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (!d.success) return;
+                    document.querySelectorAll('.czbg-card').forEach(function (c) {
+                        c.classList.remove('is-default');
+                    });
+                    selectedCard.classList.add('is-default');
+                });
+            });
+        }
+    })();
+</script>
+{% endblock %}

@@ -3,6 +3,10 @@
 {% block title %}Index - CartoonOrbitRerun{% endblock %}
 
 {% block content %}
+{% if current_user and not current_user.username %}
+    {% include '_setup_username_widget.html' %}
+{% else %}
 <h1>Hello World</h1>
 <p>Welcome to the Index page of CartoonOrbitRerun</p>
+{% endif %}
 {% endblock %}

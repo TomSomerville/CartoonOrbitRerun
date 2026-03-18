@@ -1,0 +1,138 @@
+<style>
+    /* ── Short Card shared variables ── */
+    :root {
+        --sc-card-border-width:   3px;
+        --sc-card-border-radius:  10px;
+        --sc-card-border-color:   var(--OrbitDarkBlue);
+
+        --sc-card-footer-bg:      var(--OrbitLightBlue);
+        --sc-card-footer-radius:  20px;
+        --sc-card-footer-height:  18px;
+
+        --sc-card-height:         150px;
+
+        --sc-card-padding-top:    4px;
+        --sc-card-padding-bottom: 4px;
+        --sc-card-padding-left:   4px;
+        --sc-card-padding-right:  4px;
+
+        --sc-card-img-padding:    6px;
+        --sc-card-img-scale:      .7;
+
+        --sc-card-bg:             var(--OrbitDarkBlue);
+
+        --sc-page-bg:             #ffffff;
+        --sc-page-padding:        8px;
+        --sc-page-gap:            8px;
+
+        /* ── Badge toggle (off by default) ── */
+        --sc-badge-display:            none;
+
+        /* ── New badge ── */
+        --sc-badge-new-size:           100px;
+        --sc-badge-new-x:              -40px;
+        --sc-badge-new-y:              30px;
+        --sc-badge-new-rotation:       45deg;
+        --sc-badge-new-scale:          1;
+
+        /* ── Sold Out badge ── */
+        --sc-badge-soldout-size:       100px;
+        --sc-badge-soldout-x:          -30px;
+        --sc-badge-soldout-y:          40px;
+        --sc-badge-soldout-rotation:   45deg;
+        --sc-badge-soldout-scale:      1;
+
+    }
+
+    /* ── Page grid ── */
+    .shortcard-page {
+        min-height: 100%;
+        background: var(--sc-page-bg);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--sc-page-gap);
+        padding: var(--sc-page-padding);
+        align-content: flex-start;
+    }
+
+    /* ── Card ── */
+    .shortcard {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: var(--sc-card-height);
+        border-radius: var(--sc-card-border-radius);
+        background: var(--sc-card-bg);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .shortcard::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border: var(--sc-card-border-width) solid var(--sc-card-border-color);
+        border-radius: var(--sc-card-border-radius);
+        pointer-events: none;
+    }
+
+    .shortcard-img-wrap {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: url('/static/infocard_splash_screen.png') center / cover no-repeat;
+        padding: var(--sc-card-img-padding);
+    }
+
+    .shortcard-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        transform: scale(var(--sc-card-img-scale));
+    }
+
+    .shortcard-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 5px var(--sc-card-padding-right) var(--sc-card-padding-bottom) var(--sc-card-padding-left);
+    }
+
+    .shortcard-empty {
+        padding: 24px;
+        color: #aaa;
+        font-style: italic;
+    }
+
+    /* ── Badge (off by default; pages that want badges set --sc-badge-display: block) ── */
+    .shortcard-badge {
+        position: absolute;
+        object-fit: contain;
+        z-index: 1;
+        pointer-events: none;
+        display: var(--sc-badge-display);
+        transform-origin: top right;
+    }
+
+    .shortcard-badge--new {
+        width:     var(--sc-badge-new-size);
+        height:    var(--sc-badge-new-size);
+        top:       var(--sc-badge-new-y);
+        right:     var(--sc-badge-new-x);
+        transform: rotate(var(--sc-badge-new-rotation)) scale(var(--sc-badge-new-scale));
+    }
+
+    .shortcard-badge--soldout {
+        width:     var(--sc-badge-soldout-size);
+        height:    var(--sc-badge-soldout-size);
+        top:       var(--sc-badge-soldout-y);
+        right:     var(--sc-badge-soldout-x);
+        transform: rotate(var(--sc-badge-soldout-rotation)) scale(var(--sc-badge-soldout-scale));
+    }
+
+
+</style>

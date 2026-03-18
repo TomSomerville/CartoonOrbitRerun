@@ -43,7 +43,10 @@ def create_app():
         db.connect(reuse_if_open=True)
         db.create_tables([
             models.User,
-            # add other models here as you create them
-        ])
+            models.CToon,
+            models.UserCToon,
+            models.CZone,
+            models.CZoneItem,
+        ], safe=True)
 
     return app
