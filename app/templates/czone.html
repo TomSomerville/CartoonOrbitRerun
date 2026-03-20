@@ -184,6 +184,15 @@
         color: rgba(255,255,255,0.6);
         font-style: italic;
     }
+
+    @media (max-width: 600px) {
+        .czone-item--selected {
+            outline: 3px solid #ffcc00;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.9);
+            z-index: 1000 !important;
+        }
+    }
 </style>
 
 <div class="czone-wrapper" id="czone-wrapper">
@@ -304,10 +313,11 @@
         if (sidebarTop)    sidebarTop.style.display    = 'none';
         if (sidebarBottom) sidebarBottom.style.display = 'none';
         if (sidebarMiddle) {
+            var isMobile = window.innerWidth <= 600;
             sidebarMiddle.style.display       = 'flex';
             sidebarMiddle.style.flexDirection = 'column';
-            sidebarMiddle.style.flex          = '1';
-            sidebarMiddle.style.height        = 'auto';
+            sidebarMiddle.style.flex          = isMobile ? 'none' : '1';
+            sidebarMiddle.style.height        = isMobile ? '' : 'auto';
             sidebarMiddle.style.marginTop     = '0';
             sidebarMiddle.style.overflow      = 'hidden';
         }
@@ -551,6 +561,188 @@
         ghost.remove();
         dragging = null;
     });
+
+    /* ════════════════════════════════════════════════════════
+       MOBILE TOUCH INTERACTIONS (≤ 600 px only)
+       - Tap palette ctoon  → place at canvas center
+       - Tap canvas ctoon   → select it (yellow ring)
+       - Tap canvas (empty) → move selected ctoon there
+       - Long-press ctoon   → remove & return to palette
+       ════════════════════════════════════════════════════════ */
+    if (window.innerWidth <= 600) {
+        var selectedItem   = null;
+        var LONG_PRESS_MS  = 600;
+
+        /* Returns the current zoom factor applied to main-content */
+        function getMobileZoom() {
+            var mc = document.querySelector('.main-content');
+            return (mc && mc.style.zoom) ? (parseFloat(mc.style.zoom) || 1) : 1;
+        }
+
+        /* Clamp a position so the 80×80 ctoon stays inside the canvas */
+        function clamp(x, y, canvasW, canvasH) {
+            return {
+                x: Math.max(0, Math.min(Math.round(x), canvasW - 80)),
+                y: Math.max(0, Math.min(Math.round(y), canvasH - 80)),
+            };
+        }
+
+        /* Highlight / deselect a canvas item */
+        function selectItem(el) {
+            if (selectedItem) selectedItem.classList.remove('czone-item--selected');
+            selectedItem = el || null;
+            if (selectedItem) selectedItem.classList.add('czone-item--selected');
+        }
+
+        /* Build a canvas <img> from data and append it */
+        function appendCanvasItem(src, itemId, ctoonId, x, y, zIndex, srcDataset) {
+            var img = document.createElement('img');
+            img.className       = 'czone-item ctoon-infocard-trigger';
+            img.src             = src;
+            img.draggable       = false;
+            img.dataset.itemId  = itemId;
+            img.dataset.ctoonId = ctoonId;
+            img.style.left      = x + 'px';
+            img.style.top       = y + 'px';
+            img.style.zIndex    = zIndex;
+            ['name','image','rarity','series','set','edition',
+             'minted','mintCount','cmartValue','releaseDate','mintNumber'].forEach(function (k) {
+                if (srcDataset[k] !== undefined) img.dataset[k] = srcDataset[k];
+            });
+            canvas.appendChild(img);
+            attachMobileTouchHandlers(img);
+            return img;
+        }
+
+        /* Track palette touch start so we can distinguish tap from scroll */
+        var paletteTouchOrigin = null;
+        var TAP_THRESHOLD_PX   = 10;
+
+        document.addEventListener('touchstart', function (e) {
+            var paletteEl = e.target.closest ? e.target.closest('.czew-toon') : null;
+            if (!paletteEl || !buildMode) { paletteTouchOrigin = null; return; }
+            paletteTouchOrigin = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }, { passive: true });
+
+        /* ── Palette tap: place ctoon at canvas center ── */
+        document.addEventListener('touchend', function (e) {
+            var paletteEl = e.target.closest ? e.target.closest('.czew-toon') : null;
+            if (!paletteEl || !buildMode) return;
+
+            /* Ignore if finger moved more than threshold — user was scrolling */
+            if (paletteTouchOrigin) {
+                var t  = e.changedTouches[0];
+                var dx = Math.abs(t.clientX - paletteTouchOrigin.x);
+                var dy = Math.abs(t.clientY - paletteTouchOrigin.y);
+                paletteTouchOrigin = null;
+                if (dx > TAP_THRESHOLD_PX || dy > TAP_THRESHOLD_PX) return;
+            }
+
+            e.preventDefault();
+
+            var rect    = canvas.getBoundingClientRect();
+            var zoom    = getMobileZoom();
+            var canvasW = rect.width  / zoom;
+            var canvasH = rect.height / zoom;
+            var pos     = clamp(canvasW / 2 - 40, canvasH / 2 - 40, canvasW, canvasH);
+
+            fetch('/czone/place', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ ctoon_id: parseInt(paletteEl.dataset.ctoonId), x: pos.x, y: pos.y }),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) return;
+                paletteEl.remove();
+                appendCanvasItem(paletteEl.src, d.item_id, parseInt(paletteEl.dataset.ctoonId),
+                                 pos.x, pos.y, d.z_index, paletteEl.dataset);
+            });
+        }, { passive: false });
+
+        /* ── Canvas item touch: select on tap, long-press to remove ── */
+        function attachMobileTouchHandlers(el) {
+            var longPressTimer = null;
+            var touchDidMove   = false;
+
+            el.addEventListener('touchstart', function (e) {
+                if (!buildMode) return;
+                touchDidMove   = false;
+                longPressTimer = setTimeout(function () {
+                    longPressTimer = null;
+                    selectItem(null);
+                    fetch('/czone/remove/' + el.dataset.itemId, { method: 'POST' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                            if (d.success) { returnToPalette(el); el.remove(); }
+                        });
+                }, LONG_PRESS_MS);
+            }, { passive: true });
+
+            el.addEventListener('touchmove', function () {
+                touchDidMove = true;
+                if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            }, { passive: true });
+
+            el.addEventListener('touchend', function (e) {
+                if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+                if (!buildMode || touchDidMove) return;
+                e.preventDefault();
+                e.stopPropagation(); /* don't bubble up to canvas move handler */
+                selectItem(selectedItem === el ? null : el);
+            }, { passive: false });
+        }
+
+        /* Attach to items already on the canvas (server-rendered) */
+        canvas.querySelectorAll('.czone-item').forEach(attachMobileTouchHandlers);
+
+        /* ── Canvas tap (empty area): move selected item there ── */
+        canvas.addEventListener('touchend', function (e) {
+            if (!buildMode || !selectedItem) return;
+            /* Ignore if the tap landed on a canvas item (handled above) */
+            var touch = e.changedTouches[0];
+            var target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && target.classList.contains('czone-item')) return;
+            e.preventDefault();
+
+            var rect    = canvas.getBoundingClientRect();
+            var zoom    = getMobileZoom();
+            var canvasW = rect.width  / zoom;
+            var canvasH = rect.height / zoom;
+            var pos     = clamp(
+                (touch.clientX - rect.left) / zoom - 40,
+                (touch.clientY - rect.top)  / zoom - 40,
+                canvasW, canvasH
+            );
+
+            var itemEl = selectedItem;
+            var itemId = parseInt(itemEl.dataset.itemId);
+            selectItem(null);
+
+            fetch('/czone/move/' + itemId, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ x: pos.x, y: pos.y }),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) return;
+                itemEl.style.left   = pos.x + 'px';
+                itemEl.style.top    = pos.y + 'px';
+                itemEl.style.zIndex = d.z_index;
+            });
+        }, { passive: false });
+
+        /* Clear selection when remove-all fires */
+        if (removeAllBtn) {
+            removeAllBtn.addEventListener('click', function () { selectItem(null); });
+        }
+
+        /* Update build hint for mobile */
+        buildBtn.addEventListener('click', function () {
+            if (buildMode) buildHint.textContent = 'Tap palette to place \u2022 Tap ctoon to select \u2022 Hold to remove';
+        });
+    }
 })();
 </script>
 {% endif %}

@@ -30,6 +30,14 @@ def _slugify(text):
 main_bp = Blueprint('main', __name__)
 
 
+@main_bp.route('/sw.js')
+def service_worker():
+    response = current_app.send_static_file('sw.js')
+    response.headers['Service-Worker-Allowed'] = '/'
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
 @main_bp.app_context_processor
 def inject_current_user():
     user_id = session.get('user_id')
